@@ -1,0 +1,123 @@
+---
+title: "Coal_inventory_example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Coal_inventory_example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(novaInventories)
+library(tidyverse)
+library()
+```
+
+
+```{r}
+annual.growth.perc <- 1.0
+
+pop <- data.frame(eMbalenhle = 30000, Lebohang = 8000, Zamdela = 20000)
+pop1 <- pop <- data.frame(eMbalenhle = 1, Lebohang = 1, Zamdela = 1)
+
+unitweights = list(big_bag_about_50kg_or_more = c(78,79,80),
+                   small_bag_about_25kg = c(40.4, 39, 38, 40, 41.4),
+                   Tin = c(15, 15, 15, 15),
+                   the_whole_bakkie = 500,
+                   other = 50)
+
+```
+
+```{r}
+load("../data/DES2016_canon.Rda")
+des <- dfHousehold %>% 
+  tibble() %>% 
+  select(energy_coal_consumption_wintercurrentunits, energy_coal_format, main_place, fieldworker_name) %>%
+  mutate(energy_coal_format = ifelse(energy_coal_format == "Small Bag (about 25kg)", "small_bag_about_25kg", energy_coal_format),
+         energy_coal_format = ifelse(energy_coal_format == "tin", "Tin", energy_coal_format),
+         energy_coal_format = ifelse(is.na(energy_coal_format), "not.coal.user", energy_coal_format)
+  )
+
+```
+
+
+
+# coal use diagnostics
+
+unit / format density
+
+```{r}
+qplot(x = energy_coal_consumption_wintercurrentunits, data = des, fill = energy_coal_format, geom = "density", facets = ~ fieldworker_name + main_place)
+```
+
+Remove suspect fieldworker if needed !
+
+# estimate kg coal per suburb per month
+
+
+```{r}
+winter.month.kg.suburb <- skat_dorp_brandstof(pop = pop,
+                                              dta = des,
+                                              placename = "main_place",
+                                              unitname = "energy_coal_consumption_wintercurrentunits",
+                                              unitweights = unitweights,
+                                              formatname = "energy_coal_format",
+                                              notusename = "not.coal.user",
+                                              debug = TRUE)
+```
+
+
+```{r}
+winter.month.boot.kg <- boot_dorp_brandstof(des, pop = pop, rep = 10000, debug = TRUE, dropperc = 0.07,
+                                            placename = "main_place",
+                                            unitweights = unitweights,
+                                            unitname = "energy_coal_consumption_wintercurrentunits",
+                                            formatname = "energy_coal_format",
+                                            notusename = "not.coal.user",
+                                            plt = FALSE)
+```
+
+```{r}
+winter.month.boot.kg.hh <- boot_dorp_brandstof(des, pop = pop1,
+                                               rep = 10000, debug = TRUE, dropperc = 0.07,
+                                            placename = "main_place",
+                                            unitweights = unitweights,
+                                            unitname = "energy_coal_consumption_wintercurrentunits",
+                                            formatname = "energy_coal_format",
+                                            notusename = "not.coal.user",
+                                            plt = FALSE)
+```
+
+
+
+
+```{r}
+prmlst <- list(maak_distlist(nm = "a", dist = "unif", params = c(min=100, max=200)), 
+               maak_distlist(nm = "b", dist = "norm", params = c(mean = 2 , sd = 1)),
+               maak_distlist(nm = "c", dist = "weibull", params = c(shape = 2 , scale = 1))
+                                  )
+monticarleer(prmlst, my.formula = "a * b + c", plot = TRUE)
+
+
+# vertaa(l sol_energy_coal_consumptionwinter in kg.
+
+# bepaal verdeling van kg
+# lê die prmlst bv
+# prmlst <- list(maak_distlist(nm = "a", dist = "unif", params = c(min=100, max=200)),
+# maak_distlist(nm = "b", dist = "norm", params = c(mean = 2 , sd = 1)),
+# maak_distlist(nm = "c", dist = "weibull", params = c(shape = 2 , scale = 1))
+# )
+
+# gebruik monticarleer funksie om die som te maak
+
+# sum per format (prop.fuel.format * units * pop)
+
+```
+
