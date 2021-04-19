@@ -1,0 +1,262 @@
+---
+title: "Domestic wood use inventory"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Wood_inventory_example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(novaInventories)
+library(tidyverse)
+source('~/novaInventories/R/class_indicator4.R')
+load("~/Anglo/System/RDAs/indicators.Rda")
+```
+
+
+```{r}
+# N_HHS2020<- bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$ga_ramosidi_sp_sefikile_p1$N_HHS2020),
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$N_HHS2020),
+#   tibble.indicator.plek(indicators$mortimer$northam_ext_5_ext_7$N_HHS2020),
+#   tibble.indicator.plek(indicators$mortimer$mantserre_sp$N_HHS2020),
+#   tibble.indicator.plek(indicators$waterval$bokamoso_sp$N_HHS2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$N_HHS2020),
+#   tibble.indicator.plek(indicators$waterval$waterkloof_sp$N_HHS2020)
+# ) %>% unnest(val) %>%
+#   mutate(N_HHS2020 = map(val, ~maak_distlist(
+#     nm = "N_HHS2020",
+#     dist = "unif",
+#     params = c(min = . - .%/%10, max = . + .%/%20) ))) %>%
+#   select(site, town, N_HHS2020)
+# 
+# PERC_FIRES_PPURPOSE_FLB2020 <- bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$PERC_FIRES_PPURPOSE_FLB2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$PERC_FIRES_PPURPOSE_FLB2020)
+# )
+# 
+# PERC_FIRES_BYTIMEOD_FLB2020 <-  bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$PERC_FIRES_BYTIMEOD_FLB2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$PERC_FIRES_BYTIMEOD_FLB2020)
+# )
+# 
+# dfTimeFrameM <- expand_grid(site = c("mortimer"), town = c("ga_ramosidi_sp_sefikile_p1", "sefikile_p2", "northam_ext_5_ext_7", "mantserre_sp"), response = 0:23)
+# dfTimeFrameW <- expand_grid(site = c("waterval"), town = c("bokamoso_sp", "mfidikoe_sp", "waterkloof_sp"), response = 0:23)
+# dfTimeFrame <- bind_rows(dfTimeFrameM, dfTimeFrameW) %>% group_by(site, town)
+# 
+# xh <- bind_rows(
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$PERC_IGNIT_PHH_BYHOD_SUMMR_FLB2020)) %>%
+#   unnest(val) %>%
+#   mutate(response = as.integer(response)) %>%
+#   right_join(dfTimeFrame %>% filter(town == "mfidikoe_sp")) %>%
+#   mutate(n = ifelse(is.na(n), 0, n),
+#          perc = ifelse(is.na(perc), 0.001, perc),
+#          nn = sum(n)) %>%
+#   arrange(response) %>%
+#   select(site, town, response, nn, n, perc) %>%
+#   mutate(PH1 = map2(nn, perc, ~maak_distlist(
+#     nm = "PH1",
+#     dist = "norm" ,
+#     params = c(mean = ..2/100, sd = (..2/100 * (1 -..2/100))/..1 )
+#     #dist = "pois",
+#     #params = c(lambda = ..1/100 * ..2)
+#   )))
+# 
+# mxh <- map(xh$PH1, ~roep_param(., n = 100))
+# names(mxh) <- paste0(0:23)
+# 
+# dfplot <- bind_cols(mxh) %>% mutate(id = 1:100) %>% pivot_longer(cols = -id) %>% mutate(name = as_factor(name))
+# 
+# p <- ggplot(data = dfplot, aes(x = factor(name), y = value, group = (id), color = id)) + geom_line()
+# p
+# #####################################################
+# ##                   Summer                        #
+# #####################################################
+# 
+# KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 <- bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020)
+# ) %>% unnest(val) %>%
+#   mutate(KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 = map(Mean, ~maak_distlist(
+#     nm = "KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020",
+#     dist = "pois",
+#     params = c(lambda = .) ))) %>%
+#   select(site, town, KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020)
+# 
+# PERC_IGNIT_PHH_BYHOD_SUMMR_FLB2020 <- bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$PERC_IGNIT_PHH_BYHOD_SUMMR_FLB2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$PERC_IGNIT_PHH_BYHOD_SUMMR_FLB2020)
+# ) %>% unnest(val)
+# 
+# KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020 <- bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020)) %>%
+#   unnest(val) %>%
+#   mutate(KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020 = map(Mean, ~maak_distlist(
+#     nm = "KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020",
+#     dist = "pois" ,
+#     params = c(lambda = .) ))) %>%
+#   select(site, town, KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020)
+# 
+# KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 <- bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$ga_ramosidi_sp_sefikile_p1$KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$northam_ext_5_ext_7$KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$mantserre_sp$KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$bokamoso_sp$KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$waterkloof_sp$KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020)
+#   ) %>%
+#   unnest(val) %>%
+#   mutate(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 = map(Mean, ~maak_distlist(
+#     nm = "KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020",
+#     dist = "pois" ,
+#     params = c(lambda = .) ))) %>%
+#   select(site, town, KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020)
+# 
+# PERC_HHS_WOOD_SUMMR_CHS2020 <- bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$ga_ramosidi_sp_sefikile_p1$PERC_HHS_WOOD_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$PERC_HHS_WOOD_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$northam_ext_5_ext_7$PERC_HHS_WOOD_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$mantserre_sp$PERC_HHS_WOOD_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$bokamoso_sp$PERC_HHS_WOOD_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$PERC_HHS_WOOD_SUMMR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$waterkloof_sp$PERC_HHS_WOOD_SUMMR_CHS2020)
+# ) %>% unnest(val) %>%
+#   mutate(PERC_HHS_WOOD_SUMMR_CHS2020 = map2(n, PointEst, ~maak_distlist(
+#     nm = "PERC_HHS_WOOD_SUMMR_CHS2020",
+#     dist = "norm" ,
+#     params = c(mean = ..2/100, sd = (..2/100 * (1 -..2/100))/..1 )
+#     ))) %>%
+#   select(site, town, PERC_HHS_WOOD_SUMMR_CHS2020)
+# 
+# dfSummerCHS <- left_join(N_HHS2020, PERC_HHS_WOOD_SUMMR_CHS2020) %>%
+#   left_join(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 ) %>%
+#   mutate(ll  = pmap(., ~list(N = ..3, p = ..4, KG = ..5)),
+#          res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * PERC_HHS_WOOD_SUMMR_CHS2020 * KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020",
+#                                             tbl_out = FALSE,
+#                                             saveplot = TRUE,
+#                                             fn = paste0("man/figures/Wood_Summer_Month_CHS_", ..2, ".pdf")) )
+#   ) %>% unnest(res)%>%
+#   mutate(ss = map(res, ~broom::tidy(summary(.$Result))))
+# 
+# dfSummerCHS %>% select(site, town, ss) %>% unnest(ss) %>% group_by(site, town)
+# 
+# ggplot(data = dfSummerCHS %>% select(site, town, res) %>% unnest(res) %>% arrange(site), aes(x = town, y = Result,fill = site)) + geom_boxplot() + facet_wrap(site~., scales = "free")
+# 
+# 
+# ### Summer WWS based
+# 
+# # Met total per maand
+# dfSummerWWS_M2 <- left_join(N_HHS2020, PERC_HHS_WOOD_SUMMR_CHS2020) %>%
+#   left_join(KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020 ) %>%
+#   filter(town == "sefikile_p2" | town == "mfidikoe_sp") %>%
+#   mutate(ll  = pmap(., ~list(N = ..3, p = ..4, KG = ..5)),
+#          res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * PERC_HHS_WOOD_SUMMR_CHS2020 * KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020",
+#                                      tbl_out = FALSE,
+#                                      saveplot = TRUE,
+#                                      fn = paste0("man/figures/Wood_Summer_Month_WWS_M2_", ..2, ".pdf"))
+#                    )
+#   ) %>% unnest(res)
+# 
+# dfSummerWWS_M2 %>% select(site, town, res) %>% group_by(site, town) %>%
+#   mutate(ss = map(res, ~broom::tidy(summary(.$Result)))) %>%
+#   select(-res) %>% unnest(ss)
+# 
+# ## Met aantal vure
+# KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020 <- bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020)) %>%
+#   unnest(val) %>%
+#   mutate(KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020 = map(Mean, ~maak_distlist(
+#     nm = "KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020",
+#     dist = "pois" ,
+#     params = c(lambda = .) ))) %>%
+#   select(site, town, KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020)
+# 
+# N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020 <- bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020)
+# ) %>% unnest(val) %>%
+#   mutate(N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020 = map(Mean, ~maak_distlist(
+#     nm = "N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020",
+#     dist = "pois" ,
+#     params = c(lambda = .) ))) %>%
+#   select(site, town, N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020)
+# 
+# dfSummerFLB <- left_join(N_HHS2020, KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020 ) %>%
+#   left_join(N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020 ) %>%
+#   filter(town == "sefikile_p2" | town == "mfidikoe_sp") %>%
+#   mutate(ll  = pmap(., ~list(N = ..3, p = ..4, KG = ..5)),
+#          res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020 * N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020",
+#                                             tbl_out = FALSE,
+#                                             saveplot = TRUE,
+#                                             fn = paste0("man/figures/Wood_Summer_Month_FLB_M2_", ..2, ".pdf"),
+#                                             nbin = 20)
+#          )
+#   ) %>% unnest(res)
+# 
+# dfSummerFLB %>% select(site, town, res) %>% group_by(site, town) %>%
+#   mutate(ss = map(res, ~broom::tidy(summary(.$Result)))) %>%
+#   select(-res) %>% unnest(ss)
+# 
+# 
+# #####################################################
+# ##                   Winter                        #
+# #####################################################
+# 
+# #indicators$mortimer$sefikile_p2$KG_WOOD_PWOODHH_PMONTH_SUMMR_M1_WWS2020
+# 
+# KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 <- bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$ga_ramosidi_sp_sefikile_p1$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$northam_ext_5_ext_7$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$mantserre_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$bokamoso_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$waterkloof_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020)
+# ) %>% unnest(val) %>%
+#   mutate(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 = map(Mean, ~maak_distlist(
+#     nm = "KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020",
+#     dist = "pois",
+#     params = c(lambda = .) ))) %>%
+#   select(site, town, KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020)
+# 
+# PERC_HHS_WOOD_WINTR_CHS2020 <- bind_rows(
+#   tibble.indicator.plek(indicators$mortimer$ga_ramosidi_sp_sefikile_p1$PERC_HHS_WOOD_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$PERC_HHS_WOOD_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$northam_ext_5_ext_7$PERC_HHS_WOOD_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$mortimer$mantserre_sp$PERC_HHS_WOOD_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$bokamoso_sp$PERC_HHS_WOOD_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$PERC_HHS_WOOD_WINTR_CHS2020),
+#   tibble.indicator.plek(indicators$waterval$waterkloof_sp$PERC_HHS_WOOD_WINTR_CHS2020)
+# ) %>% unnest(val) %>%
+#   mutate(p = map2(n, PointEst, ~maak_distlist(
+#     nm = "PERC_HHS_WOOD_WINTR_CHS2020",
+#     dist = "norm" ,
+#     params = c(mean = ..2/100, sd = (..2/100 * (1 -..2/100))/..1 )
+#     ))) %>%
+#   select(site, town, p)
+# 
+# dfWinterCHS <- left_join(N_HHS2020, PERC_HHS_WOOD_WINTR_CHS2020) %>%
+#   left_join(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 ) %>%
+#   mutate(ll  = pmap(., ~list(N = ..3, p = ..4, KG = ..5)),
+#          res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * PERC_HHS_WOOD_WINTR_CHS2020 * KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020",
+#                                            tbl_out = FALSE,
+#                                            saveplot = TRUE,
+#                                            fn = paste0("man/figures/Wood_Winter_Month_CHS_", ..2, ".pdf")) )
+#          ) %>%
+#   unnest(res) %>%
+#   mutate(ss = map(res, ~broom::tidy(summary(.$Result))))
+# 
+# dfWinterCHS %>% select(site, town, ss) %>% unnest(ss) %>% group_by(site, town)
+
+```
