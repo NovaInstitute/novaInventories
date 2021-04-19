@@ -1,9 +1,7 @@
 #' @description Binary Configuration Hour
-#'
 #' @details Function receives a data frame and creates a graph based on the
 #' proportion of fires active by hour. Also gives xlsx output of prop, upper and lower. Makes use
 #' of Monte Carlo Simulation
-#'
 #' @param x Data frame that contains fire data
 #' @param datumvar Character vector. Name of the column containing dates
 #' @param vuurvar Character vector. Name of the column containing fires being active or not
