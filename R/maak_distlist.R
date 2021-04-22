@@ -5,8 +5,10 @@
 setClass("distlist",
          representation = list(nm = "character",
                                dist = "character",
-                               params="numeric"),
-         prototype = list(nm="a", dist = "unif", params = c(min=1, max=2)))
+                               params ="numeric"),
+         prototype = list(nm = "a",
+                          dist = "unif",
+                          params = c(min=1, max=2)))
 
 #' @title maak.distlist
 #' @description Create an instiance of the class distlist
