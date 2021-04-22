@@ -4,17 +4,24 @@
 \alias{monticarleer}
 \title{monticarleer}
 \usage{
-monticarleer(prmlst, my.formula = "a * b ^ c", n = 100,
-  df_out = FALSE, plot = TRUE, verbose = FALSE)
+monticarleer(prmlst, my.formula = "a * b ^ c", n = 1000,
+  tbl_out = FALSE, plot = TRUE, nbin = 50, verbose = FALSE,
+  saveplot = FALSE, fn = "mc_plot")
 }
 \arguments{
 \item{prmlst}{List with items of the class distlist}
 
 \item{n}{Integer. Number of samples to draw}
 
-\item{df_out}{Logical. Return a dataframe}
+\item{tbl_out}{Logical. Return the tibble}
 
 \item{plot}{Logical. Plot or not}
+
+\item{nbin}{Integer. Number of bins}
+
+\item{saveplot}{Logical. Save the plot to file or not}
+
+\item{fn}{Character. Filename (and path) to be used if saveplot = TRUE. Default to "mc_plot"}
 }
 \description{
 Do a Monte Carlo simulation with a list of distribution proporties and a formula using them
