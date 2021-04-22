@@ -33,7 +33,7 @@ tibble.indicator.plek <- function(x, nms = c("name", "description", "val", "unit
   l2 <- substitute(x) %>% as.character()
   l3 <- strsplit(l2[[2]], "\\$")[[1]]
 
-  d %>% select(matches(nms)) %>%  mutate(site = l3[[2]],  town = l3[[3]])
+  d %>% dplyr::select(matches(nms)) %>%  mutate(site = l3[[2]],  town = l3[[3]])
 }
 
 #' @title NA_vir_niks
