@@ -1,7 +1,8 @@
 ---
 title: "Domestic wood use inventory"
 output:
-  bookdown::html_document2: default
+  bookdown::html_document2:
+    toc: true
   bookdown::pdf_document: 
     fig_caption: yes
     keep_tex: no
@@ -11,7 +12,6 @@ output:
     \usepackage{float}
     \usepackage{booktabs}
     \usepackage{siunitx}
- 
 ---
 
 ```{r setup, echo = FALSE}
@@ -25,6 +25,7 @@ library(scales)
 load("~/Anglo/System/RDAs/indicators.Rda")
 source('~/novaInventories/R/tibble.indicator.R')
 load("~/Anglo/System/RDAs/CHS.Rda")
+saveplotvar <- FALSE
 ```
 
 # Populations
@@ -45,8 +46,11 @@ N_HHS2020 <- bind_rows(
   mutate(N_HHS2020 = map(val, ~maak_distlist(
     nm = "N_HHS2020",
     dist = "unif",
-    params = c(min = . - .%/%10, max = . + .%/%10) ))) %>%
-  select(site, town, N_HHS2020)
+    params = c(min = . - .%/%10, max = . + .%/%10) )),
+    site = Hmisc::capitalize(site),
+    town = Hmisc::capitalize(town)
+    ) %>%
+  dplyr::select(site, town, N_HHS2020)
 ```
 
 ```{r fig.cap="\\label{tab:pop} Population estimates per town"}
@@ -56,7 +60,7 @@ kable(N_HHS2020 %>% mutate(distribution = map_chr(N_HHS2020, ~.@dist),
                      site = Hmisc::capitalize(site),
                      town = Hmisc::capitalize(town)
                      ) %>% 
-  select(-N_HHS2020))
+  dplyr::select(-N_HHS2020))
 ```
 
 ## Proportion of households who use wood
@@ -74,9 +78,10 @@ PERC_HHS_WOOD_SUMMR_CHS2020 <- bind_rows(
   mutate(PERC_HHS_WOOD_SUMMR_CHS2020 = map2(n, PointEst, ~maak_distlist(
     nm = "PERC_HHS_WOOD_SUMMR_CHS2020",
     dist = "norm" ,
-    params = c(mean = ..2/100, sd = (..2/100 * (1 -..2/100))/..1 )
-    ))) %>%
-  select(site, town, PERC_HHS_WOOD_SUMMR_CHS2020) %>% 
+    params = c(mean = ..2/100, sd = (..2/100 * (1 -..2/100))/..1 ))),
+    site = Hmisc::capitalize(site),
+    town = Hmisc::capitalize(town)) %>%
+  dplyr::select(site, town, PERC_HHS_WOOD_SUMMR_CHS2020) %>% 
   rename("PERC" = "PERC_HHS_WOOD_SUMMR_CHS2020")
 ```
 
@@ -86,11 +91,47 @@ Figure \ref{fig:tabpropdist} shows the distributions used to model the proportio
 PERC_HHS_WOOD_SUMMR_CHS2020 %>% 
   mutate(distribution = map_chr(PERC, ~.@dist),
          mean = map_dbl(PERC, ~.@params[[1]]),
-         sd = map_dbl(PERC, ~.@params[[2]]),
-         site = Hmisc::capitalize(site),
-          town = Hmisc::capitalize(town)
+         sd = map_dbl(PERC, ~.@params[[2]])
                ) %>% 
-  select(-PERC) %>% kable(digits = 5)
+  dplyr::select(-PERC) %>% kable(digits = 5)
+```
+
+
+## Estimate of the number if wood users per town
+
+The number of wood users per town can be calculated as the product of the proportion of households who use wood and the total number of households in the population. The proportion of households who indicated that they use wood in the sample is used as estimator for the population proportion of households who use wood.
+
+```{r woodusers, fig.cap="\\label{fig:woodusers} Estimated number of whood users per town", fig.width=16, out.width="100%"}
+dfWoodUsers <- N_HHS2020 %>% 
+  left_join(PERC_HHS_WOOD_SUMMR_CHS2020) %>%
+  mutate(ll  = pmap(., ~list(N = ..3, p = ..4)),
+         res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * PERC_HHS_WOOD_SUMMR_CHS2020",
+                                            tbl_out = FALSE,
+                                            saveplot = saveplotvar,
+                                            fn = paste0("../man/figures/WoodUsers", ..2, ".pdf")) )
+  ) %>% unnest(res)
+```
+
+The result
+
+```{r}
+dfWoodUsers %>% dplyr::select(site, town, res) %>% unnest(res)
+```
+
+
+```{r}
+specs <- map(dfWoodUsers$res, 
+  ~maak_distlist(
+    nm = "N_Whh",
+    dist = "unif",
+    params = fitdist(.$Result, "unif")$estimate %>% round())
+  )
+```
+
+
+```{r}
+dfWoodUsers %<>% dplyr::select(-res, -ll, -N_HHS2020, -PERC)
+dfWoodUsers$N <- specs
 ```
 
 
@@ -140,7 +181,7 @@ xh <- bind_rows(
          perc = ifelse(is.na(perc), 0.001, perc),
          nn = sum(n)) %>%
   arrange(site, town, response) %>%
-  select(site, town, response, nn, n, perc) %>%
+  dplyr::select(site, town, response, nn, n, perc) %>%
   mutate(PH1 = map2(nn, perc, ~maak_distlist(
     nm = "PH1",
     dist = "norm" ,
@@ -158,7 +199,7 @@ mxh <- xh %>%
   mutate(id = rep(1:100, 24)) 
 
 dfplot <- mxh %>%
-  select(-n, -nn, -PH1, -perc) %>% 
+  dplyr::select(-n, -nn, -PH1, -perc) %>% 
   rename("hod" = "response",
          "perc_fires" = "res") %>% 
   mutate(hod = as_factor(hod))
@@ -194,14 +235,15 @@ KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 <- bind_rows(
   tibble.indicator.plek(indicators$waterval$bokamoso_sp$KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020),
   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020),
   tibble.indicator.plek(indicators$waterval$waterkloof_sp$KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020)
-  ) 
+  ) %>% mutate(site = Hmisc::capitalize(site),
+    town = Hmisc::capitalize(town))
 ```
 
 ```{r fig.cap="\\label{fig:CHSSUMM}"}
 KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 %>% 
   unnest(val) %>% 
-  select(-name, -description) %>% 
-  select(site, town, everything()) %>% 
+  dplyr::select(-name, -description) %>% 
+  dplyr::select(site, town, everything()) %>% 
   kable()
 ```
 
@@ -212,28 +254,41 @@ KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 %<>%
     nm = "KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020",
     dist = "zipois" ,
     params = c(lambda = ., pstr0 = 0.1) ))) %>%
-  select(site, town, KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020)
+  dplyr::select(site, town, KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020)
 ```
 
-```{r out.width="100%"}
-dfSummerCHS <- left_join(N_HHS2020, PERC_HHS_WOOD_SUMMR_CHS2020) %>%
+The mass of wood consumed by a wood using household per summer month is modelled by a zero-inflated poison distribution. The parameters were given in Table \ref{fig:kgwoodchssummer}. 
+
+```{r kgwoodchssummer, fig.cap="\\label{fig:kgwoodchssummer}"}
+kable(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020  %>%
+        mutate(distribution = map_chr(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020, ~.@dist),
+               lamdba = map_dbl(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020, ~.@params[[1]]),
+               p = map_dbl(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020, ~.@params[[2]])
+               ) %>%
+  dplyr::select(-KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020))
+```
+
+The inputs and results of an estmation of the monthly wood consumption per town using Monte Carlo simulation is show in Figure \ref{fig:summerchs} with details of the results in Table \ref{tab:summerchs}. 
+
+```{r summerchs, fig.cap="\\label{fig:summerchs}", fig.width=16, out.width="100%"}
+dfSummerCHS <- dfWoodUsers %>%
   left_join(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 ) %>%
   mutate(ll  = pmap(., ~list(N = ..3, p = ..4, KG = ..5)),
          res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * PERC_HHS_WOOD_SUMMR_CHS2020 * KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020",
                                             tbl_out = FALSE,
-                                            saveplot = TRUE,
+                                            saveplot = saveplotvar,
                                             fn = paste0("../man/figures/Wood_Summer_Month_CHS_", ..2, ".pdf")) )
   ) %>% unnest(res)%>%
   mutate(ss = map(res, ~broom::tidy(summary(.$Result))))
 ```
 
-```{r}
-dfSummerCHS %>% select(site, town, ss) %>% unnest(ss) %>% group_by(site, town) %>% kable(digit = 0)
+```{r tabsummerchs, fig.cap="\\label{tab:tabsummerchs}"}
+dfSummerCHS %>% dplyr::select(site, town, ss) %>% unnest(ss) %>% group_by(site, town) %>% kable(digit = 0)
 ```
 
 ```{r dfSummerCHSplot, fig.cap="\\label{fig:dfSummerCHSplot}", out.width="100%"}
 ggplot(data = dfSummerCHS %>% 
-         select(site, town, res) %>% unnest(res) %>% 
+         dplyr::select(site, town, res) %>% unnest(res) %>% 
          arrange(site), aes(x = town, y = Result,fill = site)) + 
   geom_boxplot() + 
   facet_wrap(site~., scales = "free_x") +
@@ -242,9 +297,8 @@ ggplot(data = dfSummerCHS %>%
   scale_y_continuous(labels = scales::comma)
 ```
 
-## Winter results
 
-# Estimate of wood consumption from Comprehensive Household Survey
+# Estimate of wood consumption from Wood Weighing Survey
 
 ## Mass of wood per fire
 
@@ -261,8 +315,8 @@ The mass of wood per fire made as calculated from the wood weighing survey is gi
 
 ```{r fig.cap="\\label{tab:masswoodfire}"}
 kable(KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 %>% 
-        select(-name, -description) %>% 
-        select(site, town, everything()))
+        dplyr::select(-name, -description) %>% 
+        dplyr::select(site, town, everything()))
 ```
 
 The distribution of the mass of wood per fire is modelled as a normal distribution. This is shown in Table \ref{tab:masswooddistparams}. 
@@ -271,23 +325,23 @@ The distribution of the mass of wood per fire is modelled as a normal distributi
 KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 %<>%
   mutate(KG = purrr::map2(Mean, `Std. Dev`, ~maak_distlist(
     nm = "KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020",
-    dist = "norm",
-    params = c(mean = ..1, sd = ..2) ))) %>%
-  select(site, town, KG)
+    dist = "gamma",
+    params =  deriveGammaParams(Mean = ..1, Sd = ..2)))) %>%
+  dplyr::select(site, town, KG)
 ```
 
 ```{r fig.cap="\\label{tab:masswooddistparams} Distribution parameters for mass of wood used per day"}
 kable(KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 %>%
         mutate(distribution = map_chr(KG, ~.@dist),
-               mean = map_dbl(KG, ~.@params[[1]]),
-               sd = map_dbl(KG, ~.@params[[2]])
+               shape = map_dbl(KG, ~.@params[[1]]),
+               scale = map_dbl(KG, ~.@params[[2]])
                ) %>%
-  select(-KG))
+  dplyr::select(-KG))
 ```
 
 ## Number of fires made per month
 
-indicators$mortimer$sefikile_p2$N_FIRES_PWOODHH_PDAY_SUMMR_FLB2020
+The number of fires made 
 
 ```{r}
 N_FIRES_PWOODHH_PDAY_SUMMR_FLB2020 <- bind_rows(
@@ -298,37 +352,42 @@ N_FIRES_PWOODHH_PDAY_SUMMR_FLB2020 <- bind_rows(
          town = Hmisc::capitalize(town))
 ```
 
-```{r}
+```{r fpdkab, fig.cap="\\label{Number of fires per day}"}
 kable(N_FIRES_PWOODHH_PDAY_SUMMR_FLB2020 %>% 
-        select(-name, -description) %>% 
-        select(site, town, everything()))
+        dplyr::select(-name, -description) %>% 
+        dplyr::select(site, town, everything()))
 ```
 
 ```{r}
 N_FIRES_PWOODHH_PDAY_SUMMR_FLB2020 %<>%
-  mutate(N_fpd = purrr::map2(Mean, `Std. Dev`, ~maak_distlist(
+  mutate(N_fpd = purrr::map2(Median, `Std. Dev`, ~maak_distlist(
     nm = "N_fpd",
-    dist = "lnorm",
-    params = c(meanlog = log(..1), sdlog = abs(log(..2))) ))) %>%
-  select(site, town, N_fpd)
-N_FIRES_PWOODHH_PDAY_SUMMR_FLB2020$N_fpd[[2]]@params <- c(meanlog = log(0.73), sdlog = abs(log(0.68)))# hand edit : gebruik mediaan as gemiddeld en ander plek se sd
+    dist = "pois",
+    params = c(lambda = ..1))
+    )
+    ) %>%
+  dplyr::select(site, town, N_fpd)
+
 ```
 
-```{r}
+
+The number of fires is modelled by a poison distribution since a count in modelled and the mean and standard deviation is of more or less equal magnitude. The parameters used are shown in Table \ref{fig:fpd}. We used the median as estimate for the first moment. 
+
+```{r fig.cap="\\label{fig:fpd}"}
 N_FIRES_PWOODHH_PDAY_SUMMR_FLB2020 %>% 
   mutate(distribution = map_chr(N_fpd, ~.@dist),
-        logmean = map_dbl(N_fpd, ~.@params[[1]]),
-        sdmean = map_dbl(N_fpd, ~.@params[[2]])
+        lambda = map_dbl(N_fpd, ~.@params[[1]])
          ) %>% 
-  select(-N_fpd) %>% 
+  dplyr::select(-N_fpd) %>% 
   kable(digits = 4)
 ```
 
 
+
 ## Result: Method 1 for wood weights
 
-```{r}
-dfSummerWWS <- left_join(N_HHS2020, PERC_HHS_WOOD_SUMMR_CHS2020) %>%
+```{r out.width="100%", fig.width=16}
+dfSummerWWS <- dfWoodUsers %>%
   mutate(site = Hmisc::capitalize(site),
          town = Hmisc::capitalize(town)) %>% 
   left_join(KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020) %>% 
@@ -337,19 +396,19 @@ dfSummerWWS <- left_join(N_HHS2020, PERC_HHS_WOOD_SUMMR_CHS2020) %>%
   mutate(ll  = pmap(., ~list( N_HH=..3, PERC =..4,  KG = ..5, N_fpd = ..6 )),
          res = map2(ll, town, ~monticarleer(..1, "(N_HHS2020 * PERC_HHS_WOOD_SUMMR_CHS2020) * (KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 * N_fpd * 30.4)",
                                             tbl_out = FALSE,
-                                            saveplot = TRUE,
+                                            saveplot = saveplotvar,
                                             fn = paste0("../man/figures/Wood_Summer_Month_WWS_", ..2, ".pdf")) )
   ) %>% unnest(res)%>%
   mutate(ss = map(res, ~broom::tidy(summary(.$Result))))
 ```
 
 ```{r}
-dfSummerWWS %>% select(site, town, ss) %>% unnest(ss) %>% group_by(site, town) %>% kable(digit = 0)
+dfSummerWWS %>% dplyr::select(site, town, ss) %>% unnest(ss) %>% group_by(site, town) %>% kable(digit = 0)
 ```
 
 ```{r}
 ggplot(data = dfSummerWWS %>% 
-         select(site, town, res) %>% unnest(res) %>% 
+         dplyr::select(site, town, res) %>% unnest(res) %>% 
          arrange(site), aes(x = town, y = Result,fill = site)) + 
   geom_boxplot() + 
   facet_wrap(site~., scales = "free_x") +
@@ -359,7 +418,7 @@ ggplot(data = dfSummerWWS %>%
 ```
 
 
-## Monthly mass of wood 
+## Monthly mass of wood in winter
 
 ```{r}
 KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020 <- bind_rows(
@@ -370,26 +429,26 @@ KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020 <- bind_rows(
     nm = "KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020",
     dist = "pois" ,
     params = c(lambda = .) ))) %>%
-  select(site, town, KG)
+  dplyr::select(site, town, KG)
 ```
 
 
 ```{r}
-dfSummerWWS_M2 <- left_join(N_HHS2020, PERC_HHS_WOOD_SUMMR_CHS2020) %>%
+dfSummerWWS_M2 <-dfWoodUsers %>%
   left_join(KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020 ) %>%
   filter(town == "sefikile_p2" | town == "mfidikoe_sp") %>%
   mutate(ll  = pmap(., ~list(N = ..3, p = ..4, KG = ..5)),
          res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * PERC_HHS_WOOD_SUMMR_CHS2020 * KG_WOOD_PWOODHH_PMONTH_SUMMR_M2_WWS2020",
                                      tbl_out = FALSE,
-                                     saveplot = TRUE,
+                                     saveplot = saveplotvar,
                                      fn = paste0("../man/figures/Wood_Summer_Month_WWS_M2_", ..2, ".pdf")))
   ) %>% unnest(res)
 ```
 
-```{}
-# dfSummerWWS_M2 %>% select(site, town, res) %>% group_by(site, town) %>%
-#   mutate(ss = map(res, ~broom::tidy(summary(.$Result)))) %>%
-#   select(-res) %>% unnest(ss)
+```{r}
+dfSummerWWS_M2 %>% dplyr::select(site, town, res) %>% group_by(site, town) %>%
+  mutate(ss = map(res, ~broom::tidy(summary(.$Result)))) %>%
+  dplyr::select(-res) %>% unnest(ss)
 ```
 
 ### Mass of wood per fires 
@@ -405,7 +464,7 @@ KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020 <- bind_rows(
     nm = "KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020",
     dist = "pois" ,
     params = c(lambda = .) ))) %>%
-  select(site, town, KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020)
+  dplyr::select(site, town, KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020)
 ```
 
 ```{r}
@@ -413,7 +472,7 @@ KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020 %>%
   mutate(distribution = map_chr(KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020, ~.@dist),
                      lambda = map_dbl(KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020, ~.@params)
                      ) %>% 
-  select(-KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020) %>% 
+  dplyr::select(-KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020) %>% 
   kable()
 ```
 
@@ -426,7 +485,7 @@ N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020 <- bind_rows(
     nm = "N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020",
     dist = "pois" ,
     params = c(lambda = .) ))) %>%
-  select(site, town, N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020)
+  dplyr::select(site, town, N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020)
 ```
 
 ```{r}
@@ -434,19 +493,20 @@ N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020 %>%
   mutate(distribution = map_chr(N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020, ~.@dist),
                      lambda = map_dbl(N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020, ~.@params)
                      ) %>% 
-  select(-N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020) %>% 
+  dplyr::select(-N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020) %>% 
   kable()
 ```
 
 
 ```{r}
-dfSummerFLB <- left_join(N_HHS2020, KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020 ) %>%
+dfSummerFLB <- dfWoodUsers %>%
   left_join(N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020 ) %>%
+  left_join(KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020) %>%
   filter(town == "sefikile_p2" | town == "mfidikoe_sp") %>%
   mutate(ll  = pmap(., ~list(N = ..3, p = ..4, KG = ..5)),
          res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020 * N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020",
                                             tbl_out = FALSE,
-                                            saveplot = TRUE,
+                                            saveplot = saveplotvar,
                                             fn = paste0("../man/figures/Wood_Summer_Month_FLB_M2_", ..2, ".pdf"),
                                             nbin = 20)
          )
@@ -455,18 +515,17 @@ dfSummerFLB <- left_join(N_HHS2020, KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020 ) %>%
 
 
 ```{r}
-dfSummerFLB %>% select(site, town, res) %>% group_by(site, town) %>%
+dfSummerFLB %>% dplyr::select(site, town, res) %>% group_by(site, town) %>%
   mutate(ss = map(res, ~broom::tidy(summary(.$Result)))) %>%
-  select(-res) %>% unnest(ss)
+  dplyr::select(-res) %>% unnest(ss)
 ```
 
 
-# #####################################################
-# ##                   Winter                        #
-# #####################################################
-# 
-# #indicators$mortimer$sefikile_p2$KG_WOOD_PWOODHH_PMONTH_SUMMR_M1_WWS2020
-# 
+
+### Winter 
+
+ 
+```{r}
 # KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 <- bind_rows(
 #   tibble.indicator.plek(indicators$mortimer$ga_ramosidi_sp_sefikile_p1$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
 #   tibble.indicator.plek(indicators$mortimer$sefikile_p2$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
@@ -480,7 +539,7 @@ dfSummerFLB %>% select(site, town, res) %>% group_by(site, town) %>%
 #     nm = "KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020",
 #     dist = "pois",
 #     params = c(lambda = .) ))) %>%
-#   select(site, town, KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020)
+#   dplyr::select(site, town, KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020)
 # 
 # PERC_HHS_WOOD_WINTR_CHS2020 <- bind_rows(
 #   tibble.indicator.plek(indicators$mortimer$ga_ramosidi_sp_sefikile_p1$PERC_HHS_WOOD_WINTR_CHS2020),
@@ -496,19 +555,21 @@ dfSummerFLB %>% select(site, town, res) %>% group_by(site, town) %>%
 #     dist = "norm" ,
 #     params = c(mean = ..2/100, sd = (..2/100 * (1 -..2/100))/..1 )
 #     ))) %>%
-#   select(site, town, p)
+#   dplyr::select(site, town, p)
 # 
 # dfWinterCHS <- left_join(N_HHS2020, PERC_HHS_WOOD_WINTR_CHS2020) %>%
 #   left_join(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 ) %>%
 #   mutate(ll  = pmap(., ~list(N = ..3, p = ..4, KG = ..5)),
 #          res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * PERC_HHS_WOOD_WINTR_CHS2020 * KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020",
 #                                            tbl_out = FALSE,
-#                                            saveplot = TRUE,
+#                                            saveplot = saveplotvar,
 #                                            fn = paste0("man/figures/Wood_Winter_Month_CHS_", ..2, ".pdf")) )
 #          ) %>%
 #   unnest(res) %>%
 #   mutate(ss = map(res, ~broom::tidy(summary(.$Result))))
 # 
-# dfWinterCHS %>% select(site, town, ss) %>% unnest(ss) %>% group_by(site, town)
+# dfWinterCHS %>% dplyr::select(site, town, ss) %>% unnest(ss) %>% group_by(site, town)
 
 ```
+
+
