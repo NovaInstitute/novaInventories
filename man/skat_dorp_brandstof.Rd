@@ -4,10 +4,17 @@
 \alias{skat_dorp_brandstof}
 \title{skat_dorp_brandstof}
 \usage{
-skat_dorp_brandstof(pop, dta, placename = "place",
+skat_dorp_brandstof(
+  pop,
+  dta,
+  placename = "place",
   unitname = "sol_energy_coal_consumptionwinter",
-  formatname = "sol_energy_coal_format", notusename = "none",
-  unitweights, som = FALSE, debug = FALSE)
+  formatname = "sol_energy_coal_format",
+  notusename = "none",
+  unitweights,
+  som = FALSE,
+  debug = FALSE
+)
 }
 \arguments{
 \item{pop}{dataframe}

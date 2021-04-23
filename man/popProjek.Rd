@@ -4,10 +4,19 @@
 \alias{popProjek}
 \title{popProjek}
 \usage{
-popProjek(df = qol, var = "sol_energy_coal_ignition",
-  place = "place", pop = data.frame(eMbalenhle = 35404, Lebohang =
-  8908, eMzinoni = 10310, KwaDela = 982), latex = TRUE, xlsx = TRUE,
-  dirr = tabdir, verbose = FALSE, debug = FALSE, c.loc = "bottom")
+popProjek(
+  df = qol,
+  var = "sol_energy_coal_ignition",
+  place = "place",
+  pop = data.frame(eMbalenhle = 35404, Lebohang = 8908, eMzinoni = 10310, KwaDela =
+    982),
+  latex = TRUE,
+  xlsx = TRUE,
+  dirr = tabdir,
+  verbose = FALSE,
+  debug = FALSE,
+  c.loc = "bottom"
+)
 }
 \arguments{
 \item{df}{Data frame containing data to be used}

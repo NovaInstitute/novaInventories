@@ -4,11 +4,21 @@
 \alias{boot_dorp_brandstof}
 \title{boot_dorp_brandstof}
 \usage{
-boot_dorp_brandstof(pop, dta, placename = "place",
+boot_dorp_brandstof(
+  pop,
+  dta,
+  placename = "place",
   unitname = "sol_energy_coal_consumptionwinter",
-  formatname = "sol_energy_coal_format", notusename = "none",
-  unitweights, rep = 1000, plt = TRUE, debug = FALSE,
-  dropperc = 0.025, graphdir = "Grafieke", stoor = TRUE)
+  formatname = "sol_energy_coal_format",
+  notusename = "none",
+  unitweights,
+  rep = 1000,
+  plt = TRUE,
+  debug = FALSE,
+  dropperc = 0.025,
+  graphdir = "Grafieke",
+  stoor = TRUE
+)
 }
 \arguments{
 \item{pop}{dataframe}

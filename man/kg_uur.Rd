@@ -4,10 +4,17 @@
 \alias{kg_uur}
 \title{Kg Hour}
 \usage{
-kg_uur(x = tt, propvar = "prop", fuelprop = 0.65, nnn = c(200, 14),
+kg_uur(
+  x = tt,
+  propvar = "prop",
+  fuelprop = 0.65,
+  nnn = c(200, 14),
   mcspecfn = "~/tmp/MC_estimation_kg_coal_hod_MC_vars",
-  mcspecfn.add = NULL, mcsimfn = "~/tmp/MC_estimation_kg_coal_hod",
-  mcsimfn.add = NULL, yl = 1000)
+  mcspecfn.add = NULL,
+  mcsimfn = "~/tmp/MC_estimation_kg_coal_hod",
+  mcsimfn.add = NULL,
+  yl = 1000
+)
 }
 \arguments{
 \item{x}{Data frame such as the tt data frame generated in binconf.uur}

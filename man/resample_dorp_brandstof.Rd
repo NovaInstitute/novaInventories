@@ -4,10 +4,17 @@
 \alias{resample_dorp_brandstof}
 \title{resample_dorp_brandstof}
 \usage{
-resample_dorp_brandstof(dta, placename = "place",
+resample_dorp_brandstof(
+  dta,
+  placename = "place",
   unitname = "sol_energy_coal_consumptionwinter",
-  formatname = "sol_energy_coal_format", pop, unitweights,
-  notusename = "none", rep = 1000, ...)
+  formatname = "sol_energy_coal_format",
+  pop,
+  unitweights,
+  notusename = "none",
+  rep = 1000,
+  ...
+)
 }
 \arguments{
 \item{dta}{data frame giving indication of proportions who use the fuel and format}

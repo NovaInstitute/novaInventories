@@ -4,9 +4,17 @@
 \alias{monticarleer}
 \title{monticarleer}
 \usage{
-monticarleer(prmlst, my.formula = "a * b ^ c", n = 1000,
-  tbl_out = FALSE, plot = TRUE, nbin = 50, verbose = FALSE,
-  saveplot = FALSE, fn = "mc_plot")
+monticarleer(
+  prmlst,
+  my.formula = "a * b ^ c",
+  n = 1000,
+  tbl_out = FALSE,
+  plot = TRUE,
+  nbin = 50,
+  verbose = FALSE,
+  saveplot = FALSE,
+  fn = "mc_plot"
+)
 }
 \arguments{
 \item{prmlst}{List with items of the class distlist}
