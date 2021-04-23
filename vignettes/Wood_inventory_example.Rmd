@@ -273,8 +273,8 @@ The inputs and results of an estmation of the monthly wood consumption per town 
 ```{r summerchs, fig.cap="\\label{fig:summerchs}", fig.width=16, out.width="100%"}
 dfSummerCHS <- dfWoodUsers %>%
   left_join(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 ) %>%
-  mutate(ll  = pmap(., ~list(N = ..3, p = ..4, KG = ..5)),
-         res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * PERC_HHS_WOOD_SUMMR_CHS2020 * KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020",
+  mutate(ll  = pmap(., ~list(N = ..3, KG = ..4)),
+         res = map2(ll, town, ~monticarleer(..1, "N_Whh * KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020",
                                             tbl_out = FALSE,
                                             saveplot = saveplotvar,
                                             fn = paste0("../man/figures/Wood_Summer_Month_CHS_", ..2, ".pdf")) )
@@ -382,19 +382,31 @@ N_FIRES_PWOODHH_PDAY_SUMMR_FLB2020 %>%
   kable(digits = 4)
 ```
 
+## Fires per day x Kg per fire
+
+```{r}
+dfFireMonth <- N_FIRES_PWOODHH_PDAY_SUMMR_FLB2020  %>% 
+  left_join(KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020) %>% 
+  filter(town == "Sefikile_p2" | town == "Mfidikoe_sp") %>% 
+  mutate(ll  = pmap(., ~list( N_fpd=..3,  KG = ..4)),
+         res = map2(ll, town, ~monticarleer(..1, " N_fpd * 30.4 * KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020",
+                                            tbl_out = FALSE,
+                                            saveplot = saveplotvar,
+                                            fn = paste0("../man/figures/dfFireMonth_WWS_", ..2, ".pdf")) )
+  ) %>% unnest(res)%>%
+  mutate(ss = map(res, ~broom::tidy(summary(.$Result))))
+```
 
 
 ## Result: Method 1 for wood weights
 
 ```{r out.width="100%", fig.width=16}
-dfSummerWWS <- dfWoodUsers %>%
-  mutate(site = Hmisc::capitalize(site),
-         town = Hmisc::capitalize(town)) %>% 
+dfSummerWWS <- dfWoodUsers  %>% 
   left_join(KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020) %>% 
   left_join(N_FIRES_PWOODHH_PDAY_SUMMR_FLB2020) %>% 
   filter(town == "Sefikile_p2" | town == "Mfidikoe_sp") %>% 
-  mutate(ll  = pmap(., ~list( N_HH=..3, PERC =..4,  KG = ..5, N_fpd = ..6 )),
-         res = map2(ll, town, ~monticarleer(..1, "(N_HHS2020 * PERC_HHS_WOOD_SUMMR_CHS2020) * (KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 * N_fpd * 30.4)",
+  mutate(ll  = pmap(., ~list( N_Whh=..3,  KG = ..4, N_fpd = ..5 )),
+         res = map2(ll, town, ~monticarleer(..1, "N_Whh * (KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 * N_fpd * 30.4)",
                                             tbl_out = FALSE,
                                             saveplot = saveplotvar,
                                             fn = paste0("../man/figures/Wood_Summer_Month_WWS_", ..2, ".pdf")) )
