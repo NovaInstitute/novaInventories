@@ -54,7 +54,11 @@ des <- dfHousehold %>%
 unit / format density
 
 ```{r}
-qplot(x = energy_coal_consumption_wintercurrentunits, data = des, fill = energy_coal_format, geom = "density", facets = ~ fieldworker_name + main_place)
+qplot(x = energy_coal_consumption_wintercurrentunits, 
+      data = des, 
+      fill = energy_coal_format, 
+      geom = "density", 
+      facets = ~ fieldworker_name + main_place)
 ```
 
 Remove suspect fieldworker if needed !
@@ -75,7 +79,11 @@ winter.month.kg.suburb <- skat_dorp_brandstof(pop = pop,
 
 
 ```{r}
-winter.month.boot.kg <- boot_dorp_brandstof(des, pop = pop, rep = 10000, debug = TRUE, dropperc = 0.07,
+winter.month.boot.kg <- boot_dorp_brandstof(des, 
+                                            pop = pop, 
+                                            rep = 10000, 
+                                            debug = TRUE, 
+                                            dropperc = 0.07,
                                             placename = "main_place",
                                             unitweights = unitweights,
                                             unitname = "energy_coal_consumption_wintercurrentunits",
@@ -85,14 +93,17 @@ winter.month.boot.kg <- boot_dorp_brandstof(des, pop = pop, rep = 10000, debug =
 ```
 
 ```{r}
-winter.month.boot.kg.hh <- boot_dorp_brandstof(des, pop = pop1,
-                                               rep = 10000, debug = TRUE, dropperc = 0.07,
-                                            placename = "main_place",
-                                            unitweights = unitweights,
-                                            unitname = "energy_coal_consumption_wintercurrentunits",
-                                            formatname = "energy_coal_format",
-                                            notusename = "not.coal.user",
-                                            plt = FALSE)
+winter.month.boot.kg.hh <- boot_dorp_brandstof(des, 
+                                               pop = pop1,
+                                               rep = 10000, 
+                                               debug = TRUE, 
+                                               dropperc = 0.07,
+                                               placename = "main_place",
+                                               unitweights = unitweights,
+                                               unitname = "energy_coal_consumption_wintercurrentunits",
+                                               formatname = "energy_coal_format",
+                                               notusename = "not.coal.user",
+                                               plt = FALSE)
 ```
 
 
@@ -102,7 +113,7 @@ winter.month.boot.kg.hh <- boot_dorp_brandstof(des, pop = pop1,
 prmlst <- list(maak_distlist(nm = "a", dist = "unif", params = c(min=100, max=200)), 
                maak_distlist(nm = "b", dist = "norm", params = c(mean = 2 , sd = 1)),
                maak_distlist(nm = "c", dist = "weibull", params = c(shape = 2 , scale = 1))
-                                  )
+)
 monticarleer(prmlst, my.formula = "a * b + c", plot = TRUE)
 
 
