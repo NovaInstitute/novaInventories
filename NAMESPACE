@@ -2,6 +2,7 @@
 
 export(binconf_uur)
 export(boot_dorp_brandstof)
+export(deriveGammaParams)
 export(kg_uur)
 export(maak_distlist)
 export(maal)
