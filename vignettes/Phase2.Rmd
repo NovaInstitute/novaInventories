@@ -1,0 +1,147 @@
+---
+title: "Anglo American Air Quality Offset Project: Waterval Smelter"
+subtitle: "Establishment of intra-community emission inventories and formulation of emission reduction scenarios"
+author: "Nova Institute"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  bookdown::pdf_document2: 
+    fig_caption: yes
+    keep_tex: no
+    number_sections: yes
+    toc: false
+  bookdown::html_document2:
+    toc: true
+  header-includes:
+    \usepackage{longtable}
+    \usepackage{float}
+    \usepackage{booktabs}
+    \usepackage{siunitx}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.width = 4, fig.height = 4, fig.align = 'center', warning = FALSE, message = FALSE, fig.pos = "H")
+```
+
+```{r laailogo, out.width = "100pt", fig.align = "center"}
+knitr::include_graphics("Figures/nova_logo.png")
+options(xtable.comment = FALSE)
+```
+
+\clearpage
+
+# Summary  {.unlisted .unnumbered}
+
+\newpage
+\tableofcontents
+\listoftables
+\listoffigures
+\newpage
+
+# Background
+
+## Objective of intervention development
+The main objective of the proposed activities is to develop offset interventions that complies with the Air Quality Offset Guideline published by the regulator in March 2016, and to adhere to the conditions as communicated by the National Air Quality Officer in her approval of the Mortimer Smelter and Waterval Smelter Complex offset implementation plans. The intervention development planning and -execution are informed by the interim baseline results.
+
+
+## Scope of intervention development
+AAP’s offset implementation plans for both smelters, as presented to the regulator, propose that relevant and sound science in project design as required by the 2016 Guideline means that solutions are developed through an intervention life cycle where the increased scale of implementation is matched by increased knowledge and control. It is further stated that AAP will follow an intervention lifecycle consisting of six stages:
+
+1) Scoping and evaluation
+2) Pre-feasibility
+3) Feasibility implementation
+4) Pilot implementation
+5) Large-scale implementation
+6) Maintenance, exit and/or handover
+
+Intervention development comprises of stages 1 to 3 of the six intervention lifecycle stages above. The activities proposed in this document complies to the requirements of each of these stages.
+
+## Emission inventories, reduction scenarios, AQ modelling and gate decisions
+The first objective of this stage is to provide an appropriately modelled estimate of the ambient air quality impact of the priority sources indicated by baseline interim results. This enables effective, focussed intervention development. A reliable estimate of modelled ambient air quality impact of the priority sources can be made if the current quantity of emissions from priority sources can be approximated with a fairly high level of accuracy.
+
+The second objective of this stage is to determine what the expected modelled impact on ambient pollutant concentrations in the target area will be if a specific quantum of emissions is removed by the offset programme activities. We will use dispersion modelling to project the expected quantum of impact of different intervention scenarios.
+
+The following are main activities of this stage:
+
+1) Establish intra-community emission inventories with appropriate spatiotemporal definition
+2) Formulate emission reduction scenarios; model AQ impact and assess
+3) Select intervention-area combinations for
+
+  i) feasibility activities, and 
+  ii) implementation funnel
+
+### Establish intra-community emission inventories with appropriate spatiotemporal definition
+Baseline estimates of the priority sources will be reviewed to identify sources of variation and uncertainty regarding available baseline emission data. Based on this uncertainty analysis, requirements for additional data to be collected will be formulated after which we will proceed to collect such data. Thereafter initial estimates will be updated and an emission estimate for each priority source together with an explicit estimate of its uncertainty will be provided. We will conduct an internal workshop with the technical team and compare our estimates with published estimates of similar emissions, where available.
+
+### Formulate emission reduction scenarios; model AQ impact and assess
+This activity consists of formatting the updated baseline estimates into emission inventories suitable for use in dispersion modelling. Nova will recruit a competent third party – Airshed Planning Professionals – for the dispersion modelling itself. This will involve setting up the appropriate terrain, receptors and meteorology in the model. We will formulate realistic emission reduction scenarios for each priority source and model, describe, map and compare the air quality impact of the relevant emission reduction scenarios
+
+### Select intervention-area combinations for i) feasibility activities and ii) implementation funnel
+An integrated report will be drafted with conclusions and recommendations from the dispersion modelling; the content of the report will be discussed in a workshop with the client technical team. The process will result in the final selection of source-location combinations and emission impact targets that will inform the pre-feasibility phase.
+
+# Establish intra-community emission inventories with appropriate spatiotemporal definition
+
+## Uncertainty analysis: identify sources of variation and uncertainty 
+
+### Emissions from wood use
+
+### Emissions from roads
+
+### Emissions from waste burning
+
+## Formulate requirements for additional data to be collected 
+
+### Emissions from wood use
+
+Additional measurements in Mantserre and Mfedikwe
+
+### Emissions from roads
+
+Collections of dust samples and particle size analysis
+
+### Emissions from waste burning
+
+Incorporation of 3D analysis and time series study
+
+## Collect additional data
+
+### Emissions from wood use
+
+### Emissions from roads
+
+### Emissions from waste burning
+
+## Update baseline estimates
+
+### Emissions from wood use
+
+### Emissions from roads
+
+### Emissions from waste burning
+
+## Triangulation (e.g. comparison with published literature)
+
+### Emissions from wood use
+
+### Emissions from roads
+
+### Emissions from waste burning
+
+# Formulate emission reduction scenarios; model AQ impact and assess
+
+## Format baseline estimates for use as emission inventory Set up meteorological model (re-use existing inputs)
+
+## Set up terrain model (re-use existing inputs)
+
+## Set up receptor model
+
+## Formulate emission reduction scenarios
+
+### Emissions from wood use
+
+### Emissions from roads
+
+### Emissions from waste burning
+
+## Run scenarios in model
+Create maps of AQ impact and compare scenarios Assess modelled impact in context of offset
+
