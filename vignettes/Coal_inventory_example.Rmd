@@ -48,7 +48,6 @@ des <- dfHousehold %>%
 ```
 
 
-
 # coal use diagnostics
 
 unit / format density
