@@ -60,7 +60,7 @@ PERC_HHS_WOOD_SUMMR_CHS2020 %>%
          sd = map_dbl(PERC, ~.@params[[2]])
                ) %>% 
   dplyr::select(-PERC) %>% 
-  kable(digits = 5, booktabs = TRUE, align = "c", caption = "\\label{tab:tabpropdist}")
+  kable(digits = 5, booktabs = TRUE, align = "c", caption = "\\label{tab:tabpropdist} Parameters for the estimation of the proportion of wood users per town")
 ```
 
 ## Estimate of the number if wood users per town
@@ -72,11 +72,23 @@ dfWoodUsers <- N_HHS2020 %>%
   left_join(PERC_HHS_WOOD_SUMMR_CHS2020) %>%
   mutate(ll  = pmap(., ~list(N = ..3, p = ..4)),
          res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * PERC_HHS_WOOD_SUMMR_CHS2020",
-                                            tbl_out = FALSE,
+                                            tbl_out = FALSE, plot = FALSE,
                                             saveplot = saveplotvar,
-                                            fn = paste0("../man/figures/WoodUsers", ..2, ".pdf")) )
-  ) %>% unnest(res)
+                                            fn = paste0("../man/figures/WoodUsers", ..2, ".pdf")))) %>% unnest(res)
 ```
+
+```{r fig.width = 12, fig.height=20}
+mr = dfWoodUsers %>% select(town, res) %>% unnest(res) %>% group_by(town) %>% pivot_longer(values_to = "Value", names_to = "Variable", cols = c(N_HHS2020, PERC_HHS_WOOD_SUMMR_CHS2020, Result))
+ggplot2::ggplot(data = mr, aes(x = Value, group = Variable, fill = Variable, alpha = I(1/3))) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(aes(y =  ..density.., fill = NULL)) +
+  facet_wrap(town~Variable, scales = "free", ncol = 3) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  ggtitle(label = "Calculation of number of users")
+```
+
+
 
 The result
 
@@ -95,15 +107,15 @@ dfWoodUsers %<>% dplyr::select(-res, -ll, -N_HHS2020, -PERC)
 dfWoodUsers$N <- specs
 ```
 
-The result of the estimation of .............
+The result of the estimation of the number of households. Table \ref{tab:popminmax}
 
 ```{r}
 kable(dfWoodUsers %>% mutate(distribution = map_chr(N, ~.@dist),
                      min = map_dbl(N, ~.@params[[1]]), 
                      max = map_dbl(N, ~.@params[[2]])
                      ) %>% dplyr::select(-N), 
-      booktabs = TRUE,  align = "c", caption = "\\label{tab:woodminmax}") %>% 
-  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+      booktabs = TRUE,  align = "c", caption = "\\label{tab:popminmax} Estimated number of wood users per town") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
 ```
 
 
@@ -118,15 +130,15 @@ Fire logs were keps by 20 households each in Sefikile and Mfidikwe. A total of `
 
 ## Purpose of ingition
 
-A breakdown of the reasons for making fire is shown in Figure \ref{fig:logpurposemort} for Sefikile and in Figure \ref{fig:logpurposewat} for Mfidikwe. Cooking and heating water for bathing seems to be more or less equally important. 
+A breakdown of the reasons for making fire is shown in Figure \ref{fig:logpurposet} for Sefikile and Mfidikwe. Cooking and heating water for bathing seems to be more or less equally important. 
 
-```{r logpurposemort, fig.cap="\\label{logpurposemort}", out.width="100%"}
-indicators$mortimer$sefikile_p2$PERC_FIRES_PPURPOSE_PCOMM_SUMMR_FLB2020@plots[[2]]
+```{r logpurposemort, fig.cap="\\label{logpurpose}", out.width="100%", fig.width=12}
+p1 <- indicators$mortimer$sefikile_p2$PERC_FIRES_PPURPOSE_PCOMM_SUMMR_FLB2020@plots[[2]]
+p2 <- indicators$waterval$mfidikoe_sp$PERC_FIRES_PPURPOSE_PCOMM_SUMMR_FLB2020@plots[[2]]
+gridExtra::grid.arrange(p1, p2, ncol = 2)
 ```
 
-```{r logpurposewat, fig.cap="\\label{logpurposewat}", out.width="100%"}
-indicators$waterval$mfidikoe_sp$PERC_FIRES_PPURPOSE_PCOMM_SUMMR_FLB2020@plots[[2]]
-```
+
 
 ## Timing of fires
 
@@ -143,10 +155,11 @@ dfTimeFrame <- bind_rows(dfTimeFrameM, dfTimeFrameW) %>% group_by(site, town)
 ```
 
 
-```{r diurnal, fig.cap = "\\label{fig:diurnal}", out.width="100%"}
-ggplot(data = dfplot, aes(x = hod, y = perc_fires, group = (id), color = id)) + 
-  geom_line() + 
-  facet_wrap(~town, nrow = 2)
+```{r diurnal, fig.cap = "\\label{fig:diurnal}", out.width="100%", fig.width=8}
+ggplot(data = dfplot, aes(x = hod, y = perc_fires, group = (id), fill = id)) + 
+  geom_col() + 
+  facet_wrap(~town, nrow = 1) +
+  theme(legend.position = "none")
 ```
 
 # Estimate of wood consumption from Comprehensive Household Survey
@@ -161,7 +174,7 @@ KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 %>%
   dplyr::select(-name, -description) %>% 
   dplyr::select(site, town, everything()) %>% 
   kable(booktabs = TRUE, align = "c", caption = "\\label{tab:CHSSUMM}" ) %>% 
-  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
 ```
 
 ```{r}
@@ -193,7 +206,7 @@ dfSummerCHS <- dfWoodUsers %>%
   left_join(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 ) %>%
   mutate(ll  = pmap(., ~list(N = ..3, KG = ..4)),
          res = map2(ll, town, ~monticarleer(..1, "N_Whh * KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020",
-                                            tbl_out = FALSE,
+                                            tbl_out = FALSE, plot = FALSE,
                                             saveplot = saveplotvar,
                                             fn = paste0("../man/figures/Wood_Summer_Month_CHS_", ..2, ".pdf")) )
   ) %>% unnest(res)%>%
@@ -201,7 +214,10 @@ dfSummerCHS <- dfWoodUsers %>%
 ```
 
 ```{r tabsummerchs, fig.cap="\\label{tab:tabsummerchs}"}
-dfSummerCHS %>% dplyr::select(site, town, ss) %>% unnest(ss) %>% group_by(site, town) %>% 
+dfSummerCHS %>% 
+  dplyr::select(site, town, ss) %>% 
+  unnest(ss) %>% 
+  group_by(site, town) %>% 
   kable(digit = 0, caption = "\\label{tab:tabsummerchs}Estimated Wood consumption per town per summer month", booktabs = TRUE, align = "c") %>% 
   kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
 ```
@@ -282,8 +298,6 @@ N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020 %>%
   kable(digits = 4 , booktabs = TRUE, align = "c",caption = "\\label{tab:fpd} Count of fire per month modelled by a poison distribution") %>% 
   kableExtra::kable_styling(latex_options = c("HOLD_position"))
 ```
-
-
 
 ## Result: Method 1 for wood weights
 
