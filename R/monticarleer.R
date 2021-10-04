@@ -22,7 +22,7 @@ monticarleer <- function(prmlst,
                          saveplot = FALSE, fn = "mc_plot"){
   if(require(reshape2) == FALSE){install.packages("reshape2", dependencies = TRUE); message("Ek laai vir jou reshape2")}
   if(require(ggplot2) == FALSE){install.packages("ggplot2", dependencies = TRUE); message("Ek laai vir jou ggplot2")}
-  names(prmlst) = sapply(prmlst, function(x) x@nm)
+  names(prmlst) = map_chr(prmlst, function(x) x@nm)
   res = lapply(prmlst, function(x) roep_param(l = x, n=n))
   names(res) = names(prmlst)
 
