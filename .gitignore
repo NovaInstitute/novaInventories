@@ -6,3 +6,5 @@ inst/doc
 man/figures
 *.log
 *.tex
+data/*.Rda
+vignettes/Figures/*.*
