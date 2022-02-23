@@ -2,8 +2,11 @@
 
 export(binconf_uur)
 export(boot_dorp_brandstof)
+export(bootformula)
 export(deriveGammaParams)
+export(genereerTydMat)
 export(kg_uur)
+export(maakIndicResTab)
 export(maak_distlist)
 export(maal)
 export(monticarleer)

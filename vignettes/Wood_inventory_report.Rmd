@@ -1,0 +1,718 @@
+---
+title: "Domestic wood use inventory"
+always_allow_html: true
+output:
+  bookdown::html_document2:
+    toc: true
+  word_document: default
+  bookdown::pdf_document2: 
+    fig_caption: yes
+    keep_tex: no
+    number_sections: yes
+  bookdown::word_document2: default  
+  header-includes:
+    \usepackage{longtable}
+    \usepackage{float}
+    \usepackage{booktabs}
+    \usepackage{siunitx}
+---
+
+\tableofcontents
+\listoftables
+\listoffigures
+
+\clearpage
+
+```{r setup, echo = FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, collapse = TRUE, comment = "#>")
+library(novaInventories)
+library(knitr)
+library(magrittr)
+library(tidyverse)
+library(VGAM)
+library(scales)
+library(kableExtra)
+load("~/Anglo/System/RDAs/indicators.Rda")
+source('~/novaInventories/R/tibble.indicator.R')
+source('~/novaRoads/Tools/tenpointsummary.R')
+load("~/Anglo/System/RDAs/CHS.Rda")
+load("../data/wood_prepped.Rda")
+mortown <- c("Ga_ramosidi_sp_sefikile_p1", "Sefikile_p2", "Northam_ext_5_ext_7", "Mantserre_sp")
+saveplotvar <- FALSE
+bt <- TRUE
+```
+
+# Populations
+
+## Population estimate
+Population estimates for each town is shown in Table \ref{tab:pop}. The uncertainty in the estimate is modelled by a uniform distribution ranging from the best estimate minus 10% to the best estimate plus 10%. 
+
+```{r tabpop}
+kable(N_HHS2020 %>% filter(site == "Mortimer") %>% 
+        mutate(distribution = map_chr(N_HHS2020, ~.@dist),
+                     min = map_dbl(N_HHS2020, ~.@params[[1]]), 
+                     max = map_dbl(N_HHS2020, ~.@params[[2]]),
+                     site = Hmisc::capitalize(site),
+                     town = Hmisc::capitalize(town)
+                     ) %>% dplyr::select(-N_HHS2020) , booktabs = TRUE, align = "c", caption = "\\label{tab:popMortimer} Population estimates per town"
+      ) %>% kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r tabpopWaterval}
+kable(N_HHS2020 %>% filter(site == "Waterval") %>% 
+        mutate(distribution = map_chr(N_HHS2020, ~.@dist),
+                     min = map_dbl(N_HHS2020, ~.@params[[1]]), 
+                     max = map_dbl(N_HHS2020, ~.@params[[2]]),
+                     site = Hmisc::capitalize(site),
+                     town = Hmisc::capitalize(town)
+                     ) %>% dplyr::select(-N_HHS2020) , booktabs = TRUE, align = "c", caption = "\\label{tab:popWaterval} Population estimates per town"
+      ) %>% kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+## Proportion of households who use wood in Summer
+
+Figure \ref{fig:tabpropdist} shows the distributions used to model the proportion of households in each town who use wood. The normal distribution was chosen because the binomial distribution can be modelled by the normal distribution if the sample size is large. 
+
+```{r tabpropdistMortimer, fig.cap="\\label{fig:tabpropdist}"}
+PERC_HHS_WOOD_SUMMR_CHS2020 %>% 
+ filter(site == "Mortimer")  %>% 
+  mutate(distribution = map_chr(PERC, ~.@dist),
+         mean = map_dbl(PERC, ~.@params[[1]]),
+         sd = map_dbl(PERC, ~.@params[[2]])
+               ) %>% 
+  dplyr::select(-PERC) %>% 
+  kable(digits = 5, booktabs = TRUE, align = "c", caption = "\\label{tab:tabpropdistMortimer} Parameters for the estimation of the proportion of wood users per town") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r tabpropdistWaterval, fig.cap="\\label{fig:tabpropdistWaterval}"}
+PERC_HHS_WOOD_SUMMR_CHS2020 %>%
+ filter(site == "Waterval")  %>% 
+  mutate(distribution = map_chr(PERC, ~.@dist),
+         mean = map_dbl(PERC, ~.@params[[1]]),
+         sd = map_dbl(PERC, ~.@params[[2]])
+               ) %>% 
+  dplyr::select(-PERC) %>% 
+  kable(digits = 5, booktabs = TRUE, align = "c", caption = "\\label{tab:tabpropdistWaterval} Parameters for the estimation of the proportion of wood users per town") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+\clearpage
+
+## Estimate of the number if wood users per town
+
+The number of wood users per town can be calculated as the product of the proportion of households who use wood and the total number of households in the population. The proportion of households who indicated that they use wood in the sample is used as estimator for the population proportion of households who use wood.
+
+```{r woodusers, fig.cap="\\label{fig:woodusers} Estimated number of summer wood users per town", fig.width=16, out.width="100%"}
+dfWoodUsersSummer %>% 
+  filter(site == "Mortimer") %>% 
+  group_by(town) %>% 
+  select(res) %>%
+  mutate(res = map(res, ~tenpointsummary(.$Result))) %>% unnest(cols = c(res)) %>% 
+  kable(caption = "Estimated number of summer wood users per town", digits = 1, booktabs = bt) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r woodusersWaterval, fig.cap="\\label{fig:woodusersWaterval} Estimated number of summer wood users per town", fig.width=16, out.width="100%"}
+dfWoodUsersSummer %>% 
+  filter(site == "Waterval") %>% 
+  group_by(town) %>% 
+  select(res) %>%
+  mutate(res = map(res, ~tenpointsummary(.$Result))) %>% unnest(cols = c(res)) %>% 
+  kable( caption = "Estimated number of summer wood users per town", digits = 1, booktabs = bt) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r wooduserswinterMortimer, fig.cap="\\label{fig:wooduserswinterMortimer} Estimated number of winter wood users per town", out.width="100%"}
+dfWoodUsersWinter %>% 
+  filter(site == "Mortimer") %>% 
+  group_by(town) %>% 
+  select(res) %>%
+  mutate(res = map(res, ~tenpointsummary(.$Result))) %>% unnest(cols = c(res)) %>% 
+  kable( caption = "Estimated number of winter wood users per town", digits = 1, booktabs = bt) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r wooduserswinterWaterval, fig.cap="\\label{fig:wooduserswinterWaterval} Estimated number of winter wood users per town", out.width="100%"}
+dfWoodUsersWinter %>% 
+  filter(site == "Waterval") %>% 
+  group_by(town) %>% 
+  select(res) %>%
+  mutate(res = map(res, ~tenpointsummary(.$Result))) %>% unnest(cols = c(res)) %>% 
+  kable( caption = "Estimated number of winter wood users per town", digits = 1, booktabs = bt) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+
+```{r fig.height=7, fig.cap="\\label{fig:wooduserssummerWaterval} Estimation of the number of summer wood users per town", out.width="100%"}
+p_summer_wood_mortimer
+```
+
+```{r fig.height=5, fig.cap="\\label{fig:wooduserssummerWaterval} Estimation of the number of summer wood users per town", out.width="100%"}
+p_summer_wood_waterval
+```
+
+```{r fig.height=7, fig.cap="\\label{fig:wooduserswitnerMortimer} Estimation of the number of winter wood users per town", out.width="100%"}
+p_winter_wood_mortimer
+```
+
+```{r fig.height=5, fig.cap="\\label{fig:wooduserswitnerWaterval} Estimation of the number of winter wood users per town", out.width="100%"}
+p_winter_wood_waterval
+```
+
+
+The result of the estimation of the number of households. Table \ref{tab:popminmax}
+
+
+```{r}
+kable(dfWoodUsersSummer %>% filter(town %in% mortown) %>% 
+        mutate(distribution = map_chr(N, ~.@dist),
+                     min = map_dbl(N, ~.@params[[1]]), 
+                     max = map_dbl(N, ~.@params[[2]])
+                     ) %>% dplyr::select(site, town, distribution, min, max), 
+      booktabs = TRUE,  digits = 1, align = "c", caption = "\\label{tab:popminmaxSummerMortimer} Estimated number of summer wood users per town") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r}
+kable(dfWoodUsersSummer %>% filter(!town %in% mortown) %>% 
+        mutate(distribution = map_chr(N, ~.@dist),
+                     min = map_dbl(N, ~.@params[[1]]), 
+                     max = map_dbl(N, ~.@params[[2]])
+                     ) %>% dplyr::select(site, town, distribution, min, max), 
+      booktabs = TRUE,  digits = 1, align = "c", caption = "\\label{tab:popminmaxSummerWaterval} Estimated number of summer wood users per town") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+
+```{r}
+kable(dfWoodUsersWinter %>% filter(town %in% mortown) %>% 
+        mutate(distribution = map_chr(N, ~.@dist),
+                     min = map_dbl(N, ~.@params[[1]]), 
+                     max = map_dbl(N, ~.@params[[2]])
+                     ) %>% dplyr::select(site, town, distribution, min, max), 
+      booktabs = TRUE,  digits = 1, align = "c", caption = "\\label{tab:popminmaxWinterMortimer} Estimated number of wimter wood users per town") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r}
+kable(dfWoodUsersWinter %>% filter(!town %in% mortown) %>% 
+        mutate(distribution = map_chr(N, ~.@dist),
+                     min = map_dbl(N, ~.@params[[1]]), 
+                     max = map_dbl(N, ~.@params[[2]])
+                     ) %>% dplyr::select(site, town, distribution, min, max), 
+      booktabs = TRUE,  digits = 1, align = "c", caption = "\\label{tab:popminmaxSummerWaterval} Estimated number of winter wood users per town") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+\clearpage
+
+# Results of the fire logs
+
+```{r logtabs}
+sef_log_tab <- indicators$mortimer$sefikile_p2$PERC_FIRES_PPURPOSE_PCOMM_SUMMR_FLB2020@val
+mf_log_tab <- indicators$waterval$mfidikoe_sp$PERC_FIRES_PPURPOSE_PCOMM_SUMMR_FLB2020@val
+```
+
+Fire logs were kepts by 20 households each in Sefikile and Mfidikwe. A total of `r sum(sef_log_tab$n)` fires were logged in Sefikile and `r sum(mf_log_tab$n)` in Mfidikwe. 
+
+## Purpose of ingition
+
+A breakdown of the reasons for making fire is shown in Figure \ref{fig:logpurposet} for Sefikile and Mfidikwe. Cooking and heating water for bathing seems to be more or less equally important. 
+
+```{r logpurposemort, fig.cap="\\label{logpurpose}", out.width="100%", fig.width=12}
+p1 <- indicators$mortimer$sefikile_p2$PERC_FIRES_PPURPOSE_PCOMM_SUMMR_FLB2020@plots[[2]]
+p2 <- indicators$waterval$mfidikoe_sp$PERC_FIRES_PPURPOSE_PCOMM_SUMMR_FLB2020@plots[[2]]
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+## Timing of fires
+
+Figure \ref{fig:diurnal} shows the number of fires logged per hour of the day. 
+
+In Sefikile, the period with the mose fires are 06:00 and 07:00 in the morning. The number of fires decline after 07:00 (with small sub-peaks at 11:00 and 14:00) to each a day-time low at 15:00. Starting from 15:00 the number of fires increase to reach a afternoon peak at 17:00 that rapidly decline to 0 at 22:00. 
+
+In Mfidikwe, the highest number of fires occur in the morning around 08:00. The early morning peak starts slowly between 04:00 and 04:00 and then increases rapidly around 06:00 to finally peak at 08:00. A smaller peak occurs around mid-day and a somewhat larger peak occurs at 16:00. The afternoon peak already starts at 14:00. By 20:00, new fire activity stops. 
+
+```{r}
+dfTimeFrameM <- expand_grid(site = c("mortimer"), town = c("ga_ramosidi_sp_sefikile_p1", "sefikile_p2", "northam_ext_5_ext_7", "mantserre_sp"), response = 0:23)
+dfTimeFrameW <- expand_grid(site = c("waterval"), town = c("bokamoso_sp", "mfidikoe_sp", "waterkloof_sp"), response = 0:23)
+dfTimeFrame <- bind_rows(dfTimeFrameM, dfTimeFrameW) %>% group_by(site, town)
+```
+
+
+```{r diurnal, fig.cap = "\\label{fig:diurnal}", out.width="100%", fig.width=8}
+ggplot(data = dfplot, aes(x = hod, y = perc_fires, group = (id), fill = id)) + 
+  geom_col() + 
+  facet_wrap(~town, nrow = 1) + 
+  theme_bw() +
+  theme(legend.position = "none")
+```
+
+# Estimate of wood consumption from Comprehensive Household Survey
+
+## Summer results
+
+The comprehensive household survey contains questions of wood use in summer and winter. Respondents were asked if they used wood at all. Those who did use wood were asked in what format they buy their wood and how made units of each format they use in atypical winter and summer month. Estimated weights for each format was then used to calculate monthly wood consumption in each season. Figure \ref{tab:CHSSUMM} shows the results of this estimation per summer month.
+
+```{r fig.cap="\\label{fig:CHSSUMM_mortimer}"}
+KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 %>% 
+  filter(town %in% mortown) %>% 
+  dplyr::select(-name, -description, -KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020, -unit) %>% 
+  dplyr::select(site, town, everything()) %>% 
+  kable(booktabs = TRUE, digits = 1, align = "c", caption = "\\label{tab:CHSSUMM_mortimer} Monthly wood use per summer month from CHS" ) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+```{r fig.cap="\\label{fig:CHSSUMM_waterval}"}
+KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 %>% 
+  filter(!town %in% mortown) %>% 
+  dplyr::select(-name, -description, -KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020, -unit) %>% 
+  dplyr::select(site, town, everything()) %>% 
+  kable(booktabs = TRUE, digits = 1, align = "c", caption = "\\label{tab:CHSSUMM_Waterval} Monthly wood use per summer month from CHS" ) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+
+The mass of wood consumed by a wood using household per summer month is modelled by a zero-inflated poison distribution. The parameters were given in Table \ref{tab:kgwoodchssummer}. 
+
+```{r kgwoodchssummerMortimer, fig.cap="\\label{fig:kgwoodchssummerMortimer}"}
+kable(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020  %>%
+        filter(town %in% mortown) %>% 
+        mutate(distribution = map_chr(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020, ~.@dist),
+               lamdba = map_dbl(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020, ~.@params[[1]]),
+               p = map_dbl(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020, ~.@params[[2]])
+               ) %>% dplyr::select(site,	town,	distribution,	lamdba,	p), 
+      booktabs = TRUE, digits = 1, align = "c", caption = "\\label{tab:kgwoodchssummerMortimer}Mass of wood consumed by a wood using household per summer month is modelled by a zero-inflated poison distribution") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r kgwoodchssummerWaterval, fig.cap="\\label{fig:kgwoodchssummerWaterval}"}
+kable(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020  %>%
+        filter(!town %in% mortown) %>% 
+        mutate(distribution = map_chr(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020, ~.@dist),
+               lamdba = map_dbl(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020, ~.@params[[1]]),
+               p = map_dbl(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020, ~.@params[[2]])
+               ) %>% dplyr::select(site,	town,	distribution,	lamdba,	p), 
+      booktabs = TRUE, digits = 1, align = "c", caption = "\\label{tab:kgwoodchssummerWaterval}Mass of wood consumed by a wood using household per summer month is modelled by a zero-inflated poison distribution") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+The inputs and results of an estimation of the monthly wood consumption per town using Monte Carlo simulation is show in Figure \ref{fig:summerchs} with details of the results in Table \ref{tab:tabsummerchs}. 
+
+```{r tabsummerchs, fig.cap="\\label{tab:tabsummerchs}"}
+dfSummerCHS %>% 
+  dplyr::select(site, town, ss) %>% 
+  unnest(ss) %>% 
+  group_by(site, town) %>% 
+  kable(digit = 0, caption = "\\label{tab:tabsummerchs}Estimated Wood consumption per town per summer month", booktabs = TRUE, align = "c") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+```{r dfSummerCHSplot, fig.cap="\\label{fig:dfSummerCHSplot} Comparison of wood consumption per town per summer month", out.width="80%"}
+ggplot(data = dfSummerCHS %>% 
+         dplyr::select(site, town, res) %>% unnest(res) %>% 
+         arrange(site), aes(x = town, y = Result,fill = site)) + 
+  geom_boxplot() + 
+  facet_wrap(site~., scales = "free_x") +
+  theme_bw() +
+  theme(legend.position = "none") + 
+  theme(axis.text.x = element_text(angle = 35)) + 
+  scale_y_continuous(labels = scales::comma)
+```
+
+\clearpage
+
+
+## Winter results
+
+The comprehensive household survey contains questions of wood use in summer and winter. Respondents were asked if they used wood at all. Those who did use wood were asked in what format they buy their wood and how made units of each format they use in atypical winter and summer month. Estimated weights for each format was then used to calculate monthly wood consumption in each season. Figure \ref{tab:CHSSUMM} shows the results of this estimation per summer month.
+
+```{r fig.cap="\\label{fig:CHSWIN_mortimer}"}
+KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 %>% 
+  filter(town %in% mortown) %>% 
+  dplyr::select(-name, -description, -KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020, -unit) %>% 
+  dplyr::select(site, town, everything()) %>% 
+  kable(booktabs = TRUE, align = "c", caption = "\\label{tab:CHSSUMM_mortimer} Monthly wood use per winter month from CHS" ) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+```{r fig.cap="\\label{fig:CHSWIN_waterval}"}
+KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 %>% 
+  filter(!town %in% mortown) %>% 
+  dplyr::select(-name, -description, -KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020, -unit) %>% 
+  dplyr::select(site, town, everything()) %>% 
+  kable(booktabs = TRUE, align = "c", caption = "\\label{tab:CHSSUMM_Waterval} Monthly wood use per winter month from CHS" ) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+
+The mass of wood consumed by a wood using household per summer month is modelled by a zero-inflated poison distribution. The parameters were given in Table \ref{tab:kgwoodchssummer}. 
+
+```{r kgwoodchswinterMortimer, fig.cap="\\label{fig:kgwoodchswinterMortimer}"}
+kable(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020  %>%
+        filter(town %in% mortown) %>% 
+        mutate(distribution = map_chr(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020, ~.@dist),
+               lamdba = map_dbl(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020, ~.@params[[1]]),
+               p = map_dbl(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020, ~.@params[[2]])
+               ) %>% dplyr::select(site,	town,	distribution,	lamdba,	p), 
+      booktabs = TRUE, align = "c", caption = "\\label{tab:kgwoodchswinterMortimer}Mass of wood consumed by a wood using household per winter month is modelled by a zero-inflated poison distribution") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r kgwoodchswinterWaterval, fig.cap="\\label{fig:kgwoodchswinterWaterval}"}
+kable(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020  %>%
+        filter(!town %in% mortown) %>% 
+        mutate(distribution = map_chr(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020, ~.@dist),
+               lamdba = map_dbl(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020, ~.@params[[1]]),
+               p = map_dbl(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020, ~.@params[[2]])
+               ) %>% dplyr::select(site,	town,	distribution,	lamdba,	p), 
+      booktabs = TRUE, align = "c", caption = "\\label{tab:kgwoodchswinterWatervalr}Mass of wood consumed by a wood using household per summer month is modelled by a zero-inflated poison distribution") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+The inputs and results of an estimation of the monthly wood consumption per town using Monte Carlo simulation is show in Figure \ref{fig:summerchs} with details of the results in Table \ref{tab:tabsummerchs}. 
+
+```{r tabwinterchs, fig.cap="\\label{tab:tabsummerchs}"}
+dfWinterCHS %>% 
+  dplyr::select(site, town, ss) %>% 
+  unnest(ss) %>% 
+  group_by(site, town) %>% 
+  kable(digit = 0, caption = "\\label{tab:tabsummerchs}Estimated Wood consumption per town per winter month", booktabs = TRUE, align = "c") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+```{r dfWinterCHSplot, fig.cap="\\label{fig:dfWinterCHSplot} Comparison of wood consumption per town per winter month", out.width="80%"}
+ggplot(data = dfWinterCHS %>% 
+         filter(site == "Mortimer") %>% 
+         dplyr::select(site, town, res) %>% unnest(res) %>% 
+         arrange(site), aes(x = town, y = Result,fill = site)) + 
+  geom_boxplot() + 
+  facet_wrap(site~., scales = "free_x") +
+  theme_bw() +
+  theme(legend.position = "none") + 
+  theme(axis.text.x = element_text(angle = 0)) + 
+  scale_y_continuous(labels = scales::comma)
+```
+
+
+```{r dfWinterCHSplotI, fig.cap="\\label{fig:dfWinterCHSplotWaterval} Comparison of wood consumption per town per winter month", out.width="80%"}
+ggplot(data = dfWinterCHS %>% 
+         mutate(town = gsub("_sp", "", town),
+                town = gsub("Mfidikoe", "Mfidikwe", town)) %>% 
+          filter(site == "Waterval") %>% 
+         dplyr::select(site, town, res) %>% unnest(res) %>% 
+         arrange(site), aes(x = town, y = Result,fill = site)) + 
+  geom_boxplot() + 
+  facet_wrap(site~., scales = "free_x") +
+  theme_bw() +
+  theme(legend.position = "none") + 
+  theme(axis.text.x = element_text(angle = 0)) + 
+  scale_y_continuous(labels = scales::comma)
+```
+
+
+
+
+\clearpage
+
+
+
+# Estimate of wood consumption from Wood Weighing Survey
+
+## Mass of wood per fire
+
+The mass of wood per fire made as calculated from the wood weighing survey is given in Table \ref{tab:masswoodfireMortimer}. The mean wood use per fire in Sefikile was calculated at `r KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020$Mean[[1]]`kg 
+
+
+
+```{r fig.cap="\\label{tab:masswoodfireMortimer}"}
+kable(KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 %>% 
+        filter(town == "Sefikile_p2") %>% 
+        dplyr::select(-name, -description, -unit, -KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020) %>% 
+        dplyr::select(site, town, everything()) , 
+      booktabs = TRUE, align = "c", caption = "\\label{tab:masswoodfire}") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+The mass of wood per fire made as calculated from the wood weighing survey is given in Table \ref{tab:masswoodfireWaterval}. The mean wood use per fire in Sefikile was calculated at `r KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020$Mean[[2]]`kg for Mfidikwe. 
+
+```{r fig.cap="\\label{tab:masswoodfireWaterval}"}
+kable(KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 %>% 
+        filter(town == "Mfidikoe_sp") %>% 
+        dplyr::select(-name, -description,  -unit, -KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020) %>% 
+        dplyr::select(site, town, everything()) , 
+      booktabs = TRUE, align = "c", caption = "\\label{tab:masswoodfire}") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+The distribution of the mass of wood per fire is modelled as a Gamma Distribution. The parameters used is shown in Table \ref{tab:masswooddistparams}. 
+
+```{r}
+KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 %<>%
+  mutate(KG = purrr::map2(Mean, `Std. Dev`, ~maak_distlist(
+    nm = "KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020",
+    dist = "gamma",
+    params =  deriveGammaParams(Mean = ..1, Sd = ..2)))) %>%
+  dplyr::select(site, town, KG)
+```
+
+```{r fig.cap="\\label{tab:masswooddistparamsMortimer} Distribution parameters for mass of wood used per day"}
+kable(KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 %>%
+        filter(town == "Sefikile_p2") %>% 
+        mutate(distribution = map_chr(KG, ~.@dist),
+               shape = map_dbl(KG, ~.@params[[1]]),
+               scale = map_dbl(KG, ~.@params[[2]])
+               ) %>%
+  dplyr::select(-KG), 
+  booktabs = TRUE, align = "c", 
+  caption = "\\label{tab:masswooddistparams} Distribution parameters for mass of wood used per day") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r fig.cap="\\label{tab:masswooddistparamsWaterkloof} Distribution parameters for mass of wood used per day"}
+kable(KG_WOOD_PWOODHH_PFIRE_SUMMR_M1_WWS2020 %>%
+        filter(town == "Mfidikoe_sp") %>% 
+        mutate(distribution = map_chr(KG, ~.@dist),
+               shape = map_dbl(KG, ~.@params[[1]]),
+               scale = map_dbl(KG, ~.@params[[2]])
+               ) %>%
+  dplyr::select(-KG), 
+  booktabs = TRUE, align = "c", 
+  caption = "\\label{tab:masswooddistparams} Distribution parameters for mass of wood used per day") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+
+## Number of fires made per month
+
+The number of fires made
+
+
+```{r fpdkabMortimer}
+kable(N_FIRES_PWOODHH_PMONTH_SUMMR_FLB20201 %>% 
+        filter(town == "Sefikile_p2") %>% 
+        dplyr::select(-name, -description) %>% 
+        dplyr::select(site, town, everything()) , 
+      booktabs = TRUE, align = "c",
+      caption = "\\label{tab:fpd1Mortimer}Number of fires per day"
+      ) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+```{r fpdkabWaterval}
+kable(N_FIRES_PWOODHH_PMONTH_SUMMR_FLB20201 %>% 
+        filter(town == "Mfidikoe_sp") %>% 
+        dplyr::select(-name, -description) %>% 
+        dplyr::select(site, town, everything()) , 
+      booktabs = TRUE, align = "c",
+      caption = "\\label{tab:fpd1Waterval}Number of fires per day"
+      ) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+The number of fires is modelled by a poison distribution since a count in modelled and the mean and standard deviation is of more or less equal magnitude. The parameters used are shown in Table \ref{fig:fpd}. We used the median as estimate for the first moment. 
+
+```{r}
+N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020 %>% 
+  filter(town == "Sefikile_p2") %>% 
+  mutate(distribution = map(N_fpd, ~.@dist),
+        lambda = map_dbl(N_fpd, ~.@params[[1]])
+         ) %>% 
+  dplyr::select(-N_fpd) %>% 
+  kable(digits = 4 , booktabs = TRUE, align = "c",caption = "\\label{tab:fpdMortimer} Count of fire per month modelled by a poison distribution") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r}
+N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020 %>% 
+  filter(town == "Mfidikoe_sp") %>% 
+  mutate(distribution = map(N_fpd, ~.@dist),
+        lambda = map_dbl(N_fpd, ~.@params[[1]])
+         ) %>% 
+  dplyr::select(-N_fpd) %>% 
+  kable(digits = 4 , booktabs = TRUE, align = "c",caption = "\\label{tab:fpdWaterval} Count of fire per month modelled by a poison distribution") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+## Result: Method 1 for wood weights
+
+```{r}
+dfSummerWWS %>% 
+  filter(town == "Sefikile_p2") %>% 
+  dplyr::select(site, town, ss) %>% 
+  unnest(ss) %>% group_by(site, town) %>%
+  kable(digit = 0, booktabs = TRUE) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+```{r}
+dfSummerWWS %>% 
+  filter(town == "Mfidikoe_sp") %>% 
+  dplyr::select(site, town, ss) %>% 
+  unnest(ss) %>% group_by(site, town) %>%
+  kable(digit = 0, booktabs = TRUE) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+```{r}
+ggplot(data = dfSummerWWS %>% 
+         dplyr::select(site, town, res) %>% unnest(res) %>% 
+         arrange(site), aes(x = town, y = Result,fill = site)) + 
+  geom_boxplot() + 
+  facet_wrap(site~., scales = "free_x") +
+  theme(legend.position = "none") + 
+  theme(axis.text.x = element_text(angle = 35)) + 
+  scale_y_continuous(labels = scales::comma)
+```
+
+
+## Summer 
+
+The wood consumption per summer month per town calculated according to Method 2 is shown in \ref{fig:summermeth2}. 
+
+```{r summermeth2, fig.cap="\\label{fig:summermeth2} Mass of wood per summer month per town by Method 2"}
+# dfSummerWWS_M2
+```
+
+```{r}
+dfSummerWWS_M2 %>% 
+  filter(town == "Sefikile_p2") %>% 
+  dplyr::select(site, town, res) %>% group_by(site, town) %>%
+  mutate(ss = map(res, ~broom::tidy(summary(.$Result)))) %>%
+  dplyr::select(-res) %>% unnest(ss) %>% 
+  kable(booktabs = TRUE, digits = 1) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+
+```{r}
+dfSummerWWS_M2 %>% 
+  filter(town == "Mfidikoe_sp") %>% 
+  dplyr::select(site, town, res) %>% group_by(site, town) %>%
+  mutate(ss = map(res, ~broom::tidy(summary(.$Result)))) %>%
+  dplyr::select(-res) %>% unnest(ss) %>% 
+  kable(booktabs = TRUE, digits = 1) %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+\clearpage
+
+## Winter?
+
+## Result: Method 2 for wood weights
+
+The mass of  ...
+
+```{r}
+KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020 %>% 
+   filter(town == "sefikile_p2") %>% 
+  mutate(distribution = map_chr(KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020, ~.@dist),
+                     lambda = map_dbl(KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020, ~.@params)
+                     ) %>% 
+  dplyr::select(-KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020) %>% 
+  kable(booktabs = TRUE, align = "c", caption = "\\label{tab:summerm2Mortimer} Parameters for Summer M2 ") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r}
+KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020 %>% 
+   filter(town == "Mfidikoe_sp") %>% 
+  mutate(distribution = map_chr(KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020, ~.@dist),
+                     lambda = map_dbl(KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020, ~.@params)
+                     ) %>% 
+  dplyr::select(-KG_WOOD_PWOODHH_PFIRE_SUMMR_M2_WWS2020) %>% 
+  kable(booktabs = TRUE, align = "c", caption = "\\label{tab:summerm2Waterval} Parameters for Summer M2 ") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r}
+N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020 %>% 
+  filter(town == "Sefikile_p2") %>%
+  mutate(distribution = 
+           map_chr(N_fpd, ~.@dist),
+         lambda = map_dbl(N_fpd, ~.@params)) %>% 
+  dplyr::select(-N_fpd) %>% 
+  kable(booktabs = TRUE, align = "c", caption = "\\label{tab:M2summerpoisMortimer}") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r}
+N_FIRES_PWOODHH_PMONTH_SUMMR_FLB2020 %>% 
+  filter(town == "Mfidikoe_sp") %>%
+  mutate(distribution = 
+           map_chr(N_fpd, ~.@dist),
+         lambda = map_dbl(N_fpd, ~.@params)) %>% 
+  dplyr::select(-N_fpd) %>% 
+  kable(booktabs = TRUE, align = "c", caption = "\\label{tab:M2summerpoisWaterval}") %>% 
+  kableExtra::kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r}
+dfSummerFLB %>% 
+  filter(town == "Sefikile_p2") %>%
+  dplyr::select(site, town, res) %>% group_by(site, town) %>%
+  mutate(ss = map(res, ~broom::tidy(summary(.$Result)))) %>%
+  dplyr::select(-res) %>% unnest(ss) %>% 
+  kable(digits = 2, booktabs = bt, caption = "")
+```
+
+
+```{r}
+dfSummerFLB %>% 
+  filter(town == "Mfidikoe_sp") %>%
+  dplyr::select(site, town, res) %>% group_by(site, town) %>%
+  mutate(ss = map(res, ~broom::tidy(summary(.$Result)))) %>%
+  dplyr::select(-res) %>% unnest(ss) %>% 
+  kable(digits = 2, booktabs = bt, caption = "")
+```
+
+
+### Winter 
+
+
+```{r}
+# dfWinterCHSlong
+```
+
+```{r fig.width=12, fig.height=8}
+ggplot2::ggplot(data = dfWinterCHSlong %>% filter(town %in% c ("Mantserre", "Ga-Ramosidi & Sefikile", "Sefikile P2","Northam")),
+                aes(x = value, group = Variable, fill = Variable, alpha = I(1/3))) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(aes(y =  ..density.., fill = NULL)) +
+  facet_wrap(town~Variable, scales = "free", ncol = 3, strip.position = c("left") ) +
+  theme_bw() +
+  theme(legend.position = "bottom" , #strip.text = element_blank()
+        ) +
+  ggtitle(label = "Calculation of total winter household wood burning per town")
+  #ggsave("~/novaInventories/man/figures/WoodSummaryMortimer.pdf", width = 14, height = 7)
+```
+
+```{r fig.width=12, fig.height=8}
+ggplot2::ggplot(data = dfWinterCHSlong %>% filter(!town %in% c ("Mantserre", "Ga-Ramosidi & Sefikile", "Sefikile P2","Northam")),
+                aes(x = value, group = Variable, fill = Variable, alpha = I(1/3))) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(aes(y =  ..density.., fill = NULL)) +
+  facet_wrap(town~Variable, scales = "free", ncol = 3, strip.position = c("left") ) +
+  theme_bw() +
+  theme(legend.position = "bottom" , #strip.text = element_blank()
+        ) +
+  ggtitle(label = "Calculation of total winter household wood burning per town")
+  #ggsave("~/novaInventories/man/figures/WoodSummaryWaterval.pdf", width = 14, height = 7)
+```
+
+
+```{r}
+dfWinterCHS %>% 
+  filter(site  == "Mortimer") %>%
+  dplyr::select(site, town, ss) %>% unnest(ss) %>% group_by(site, town) %>% 
+  kable(digits = 0, booktabs = TRUE)
+```
+
+
+```{r}
+dfWinterCHS %>% 
+  filter(site  == "Waterval") %>%
+  dplyr::select(site, town, ss) %>% unnest(ss) %>% group_by(site, town) %>% 
+  kable(digits = 0, booktabs = TRUE)
+```

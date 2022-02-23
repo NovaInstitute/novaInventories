@@ -1,5 +1,5 @@
 #' @title deriveGammaParams
-#' @description Derive the parameters for the Gamma distrubution from the mean and sd
+#' @description Derive the parameters for the Gamma distribution from the mean and sd
 #' @param Mean Numeric. The mean
 #' @param Sd Numeric. The standard deviation
 #' @param Var Numeric. The variance (alternative to sd)

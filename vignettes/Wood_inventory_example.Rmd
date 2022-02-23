@@ -1,12 +1,15 @@
 ---
 title: "Domestic wood use inventory"
+always_allow_html: true
 output:
   bookdown::pdf_document2: 
     fig_caption: yes
     keep_tex: no
     number_sections: yes
+  word_document: default
   bookdown::html_document2:
     toc: true
+  bookdown::word_document2: default  
   header-includes:
     \usepackage{longtable}
     \usepackage{float}
@@ -18,6 +21,7 @@ output:
 \listoftables
 \listoffigures
 
+\clearpage
 
 ```{r setup, echo = FALSE, message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, collapse = TRUE, comment = "#>")
@@ -39,14 +43,15 @@ saveplotvar <- FALSE
 
 ## Population estimate
 Population estimates for each town is shown in Table \ref{tab:pop}. The uncertainty in the estimate is modelled by a uniform distribution ranging from the best estimate minus 10% to the best estimate plus 10%. 
+
 ```{r tabpop}
 kable(N_HHS2020 %>% mutate(distribution = map_chr(N_HHS2020, ~.@dist),
                      min = map_dbl(N_HHS2020, ~.@params[[1]]), 
                      max = map_dbl(N_HHS2020, ~.@params[[2]]),
                      site = Hmisc::capitalize(site),
                      town = Hmisc::capitalize(town)
-                     ) %>% dplyr::select(-N_HHS2020), 
-      booktabs = TRUE, align = "c", caption = "\\label{tab:pop}Population estimates per town")
+                     ) %>% dplyr::select(-N_HHS2020) , booktabs = TRUE, align = "c", caption = "\\label{tab:pop}Population estimates per town"
+      )
 ```
 
 ## Proportion of households who use wood in Summer
@@ -173,7 +178,7 @@ KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 %>%
   unnest(val) %>% 
   dplyr::select(-name, -description) %>% 
   dplyr::select(site, town, everything()) %>% 
-  kable(booktabs = TRUE, align = "c", caption = "\\label{tab:CHSSUMM}" ) %>% 
+  kable(booktabs = TRUE, align = "c", caption = "\\label{tab:CHSSUMM} Monthly wood use per summer month from CHS" ) %>% 
   kableExtra::kable_styling(latex_options = c("HOLD_position", "scale_down"))
 ```
 
@@ -199,9 +204,9 @@ kable(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020  %>%
   kableExtra::kable_styling(latex_options = c("HOLD_position"))
 ```
 
-The inputs and results of an estmation of the monthly wood consumption per town using Monte Carlo simulation is show in Figure \ref{fig:summerchs} with details of the results in Table \ref{tab:summerchs}. 
+The inputs and results of an estimation of the monthly wood consumption per town using Monte Carlo simulation is show in Figure \ref{fig:summerchs} with details of the results in Table \ref{tab:tabsummerchs}. 
 
-```{r summerchs, fig.cap="\\label{fig:summerchs}", fig.width=16, out.width="100%"}
+```{r fig.cap="\\label{fig:summerchs}", fig.width=16, out.width="100%"}
 dfSummerCHS <- dfWoodUsers %>%
   left_join(KG_WOOD_PWOODHH_PMONTH_SUMMR_CHS2020 ) %>%
   mutate(ll  = pmap(., ~list(N = ..3, KG = ..4)),
@@ -405,49 +410,104 @@ dfSummerFLB %>% dplyr::select(site, town, res) %>% group_by(site, town) %>%
 
  
 ```{r}
-# KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 <- bind_rows(
-#   tibble.indicator.plek(indicators$mortimer$ga_ramosidi_sp_sefikile_p1$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$mortimer$northam_ext_5_ext_7$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$mortimer$mantserre_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$waterval$bokamoso_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$waterval$waterkloof_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020)
-# ) %>% unnest(val) %>%
-#   mutate(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 = map(Mean, ~maak_distlist(
-#     nm = "KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020",
-#     dist = "pois",
-#     params = c(lambda = .) ))) %>%
-#   dplyr::select(site, town, KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020)
-# 
-# PERC_HHS_WOOD_WINTR_CHS2020 <- bind_rows(
-#   tibble.indicator.plek(indicators$mortimer$ga_ramosidi_sp_sefikile_p1$PERC_HHS_WOOD_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$mortimer$sefikile_p2$PERC_HHS_WOOD_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$mortimer$northam_ext_5_ext_7$PERC_HHS_WOOD_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$mortimer$mantserre_sp$PERC_HHS_WOOD_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$waterval$bokamoso_sp$PERC_HHS_WOOD_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$waterval$mfidikoe_sp$PERC_HHS_WOOD_WINTR_CHS2020),
-#   tibble.indicator.plek(indicators$waterval$waterkloof_sp$PERC_HHS_WOOD_WINTR_CHS2020)
-# ) %>% unnest(val) %>%
-#   mutate(p = map2(n, PointEst, ~maak_distlist(
-#     nm = "PERC_HHS_WOOD_WINTR_CHS2020",
-#     dist = "norm" ,
-#     params = c(mean = ..2/100, sd = (..2/100 * (1 -..2/100))/..1 )
-#     ))) %>%
-#   dplyr::select(site, town, p)
-# 
-# dfWinterCHS <- left_join(N_HHS2020, PERC_HHS_WOOD_WINTR_CHS2020) %>%
-#   left_join(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 ) %>%
-#   mutate(ll  = pmap(., ~list(N = ..3, p = ..4, KG = ..5)),
-#          res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * PERC_HHS_WOOD_WINTR_CHS2020 * KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020",
-#                                            tbl_out = FALSE,
-#                                            saveplot = saveplotvar,
-#                                            fn = paste0("man/figures/Wood_Winter_Month_CHS_", ..2, ".pdf")) )
-#          ) %>%
-#   unnest(res) %>%
-#   mutate(ss = map(res, ~broom::tidy(summary(.$Result))))
-# 
-# dfWinterCHS %>% dplyr::select(site, town, ss) %>% unnest(ss) %>% group_by(site, town)
+KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 <- bind_rows(
+  tibble.indicator.plek(indicators$mortimer$ga_ramosidi_sp_sefikile_p1$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$mortimer$sefikile_p2$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$mortimer$northam_ext_5_ext_7$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$mortimer$mantserre_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$waterval$bokamoso_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$waterval$mfidikoe_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$waterval$waterkloof_sp$KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020)) %>% 
+  unnest(cols = c(val)) 
+```
+
+```{r}
+KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 %<>% 
+  mutate(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 = map(Mean, ~novaInventories::maak_distlist(
+    nm = "KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020",
+    dist = "pois",
+    params = c(lambda = as.numeric(.))))) %>%
+  dplyr::select(site, town, KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020)
+```
+
+```{r}
+PERC_HHS_WOOD_WINTR_CHS2020 <- bind_rows(
+  tibble.indicator.plek(indicators$mortimer$ga_ramosidi_sp_sefikile_p1$PERC_HHS_WOOD_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$mortimer$sefikile_p2$PERC_HHS_WOOD_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$mortimer$northam_ext_5_ext_7$PERC_HHS_WOOD_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$mortimer$mantserre_sp$PERC_HHS_WOOD_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$waterval$bokamoso_sp$PERC_HHS_WOOD_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$waterval$mfidikoe_sp$PERC_HHS_WOOD_WINTR_CHS2020),
+  tibble.indicator.plek(indicators$waterval$waterkloof_sp$PERC_HHS_WOOD_WINTR_CHS2020)
+) %>% unnest(val) %>%
+  mutate(p = map2(n, PointEst, ~maak_distlist(
+    nm = "PERC_HHS_WOOD_WINTR_CHS2020",
+    dist = "norm" ,
+    params = c(mean = ..2/100, sd = (..2/100 * (1 -..2/100))/..1 )
+    ))) %>%
+  dplyr::select(site, town, p)
+```
+
+```{r}
+dfWinterCHS <- left_join(N_HHS2020 %>% mutate(site = tolower(site), town = tolower(town)), PERC_HHS_WOOD_WINTR_CHS2020) %>%
+  left_join(KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020 ) %>%
+  mutate(ll  = pmap(., ~list(N = ..3, p = ..4, KG = ..5)),
+         res = map2(ll, town, ~monticarleer(..1, "N_HHS2020 * PERC_HHS_WOOD_WINTR_CHS2020 * KG_WOOD_PWOODHH_PMONTH_WINTR_CHS2020", n = 3000,
+                                            tbl_out = FALSE,
+                                            saveplot = saveplotvar,
+                                            fn = paste0("man/figures/Wood_Winter_Month_CHS_", ..2, ".pdf")) )
+         ) %>%
+  unnest(res) %>%
+  mutate(ss = map(res, ~broom::tidy(summary(.$Result))))
+```
+
+```{r}
+dfWinterCHSlong <- dfWinterCHS %>%
+  select(town, res) %>% 
+  unnest(cols = c(res)) %>%  
+  pivot_longer(cols = -town, names_to = "Variable") %>% 
+  mutate(
+    town = case_when(
+        town == "ga_ramosidi_sp_sefikile_p1" ~ "Ga-Ramosidi & Sefikile",
+        town == "sefikile_p2" ~ "Sefikile P2",
+        town == "northam_ext_5_ext_7" ~ "Northam",
+        town == "mantserre_sp" ~ "Mantserre",
+        town == "bokamoso_sp" ~ "Bokamoso",
+        town == "mfidikoe_sp" ~ "Mfidikoe",
+        town == "waterkloof_sp" ~ "Waterkloof",
+        TRUE ~ town)
+      )
+```
+
+```{r}
+ggplot2::ggplot(data = dfWinterCHSlong %>% filter(town %in% c ("Mantserre", "Ga-Ramosidi & Sefikile", "Sefikile P2","Northam")),
+                aes(x = value, group = Variable, fill = Variable, alpha = I(1/3))) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(aes(y =  ..density.., fill = NULL)) +
+  facet_wrap(town~Variable, scales = "free", ncol = 4, strip.position = c("left") ) +
+  theme_bw() +
+  theme(legend.position = "bottom" , #strip.text = element_blank()
+        ) +
+  ggtitle(label = "Calculation of total winter household wood burning per town")
+  #ggsave("~/novaInventories/man/figures/WoodSummaryMortimer.pdf", width = 14, height = 7)
+```
+
+```{r}
+ggplot2::ggplot(data = dfWinterCHSlong %>% filter(!town %in% c ("Mantserre", "Ga-Ramosidi & Sefikile", "Sefikile P2","Northam")),
+                aes(x = value, group = Variable, fill = Variable, alpha = I(1/3))) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(aes(y =  ..density.., fill = NULL)) +
+  facet_wrap(town~Variable, scales = "free", ncol = 4, strip.position = c("left") ) +
+  theme_bw() +
+  theme(legend.position = "bottom" , #strip.text = element_blank()
+        ) +
+  ggtitle(label = "Calculation of total winter household wood burning per town")
+  #ggsave("~/novaInventories/man/figures/WoodSummaryWaterval.pdf", width = 14, height = 7)
+```
+
+
+```{r}
+dfWinterCHS %>% dplyr::select(site, town, ss) %>% unnest(ss) %>% group_by(site, town) %>% kable()
 
 ```
 
