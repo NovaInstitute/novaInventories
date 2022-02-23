@@ -23,7 +23,9 @@ skat_dorp_brandstof <- function(pop,
                                 unitname = "sol_energy_coal_consumptionwinter",
                                 formatname  = "sol_energy_coal_format",
                                 notusename = "none",
-                                unitweights, som = FALSE, debug = FALSE){
+                                unitweights,
+                                som = FALSE,
+                                debug = FALSE){
   # drop all NA from pop
   # make NA none in formats and 0 in weights
     dta <- as.data.frame(dta)
@@ -45,7 +47,7 @@ skat_dorp_brandstof <- function(pop,
   #if (is.na(match(notusename, names(unitweights)))) unitweights[,notusename] = 0
 
   if (!is.na(match(notusename, names(unitweights)))){
-    unitweights[,notusename] = 0
+    unitweights[[notusename]] = 0
   } else {
     unitweights[[length(unitweights)+1]] = 0
     names(unitweights)[length(unitweights)] <- notusename
@@ -107,15 +109,15 @@ skat_dorp_brandstof <- function(pop,
  sub.kg = rowSums(pop.weight, na.rm = T)
  tot.kg = sum(sub.kg, na.rm = T)
  if (som == TRUE){
-   tot.kg
+   return(tot.kg)
  } else {
-   z = abind(unit.weight.mean = unit.w.m,
+   z = abind::abind(unit.weight.mean = unit.w.m,
              units.used.mean = unitmean,
              kg.used = kg.weight,
              proportion.of.households = fpp,
              total.mass.used = pop.weight,
              along = 0)
-   list(result = sub.kg, inputs = z) # was sub.kg
+   return(list(result = sub.kg, inputs = z)) # was sub.kg)
  }
 }
 
