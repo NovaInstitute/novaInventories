@@ -19,7 +19,9 @@ monticarleer <- function(prmlst,
                          plot = TRUE,
                          nbin = 50,
                          verbose = FALSE,
-                         saveplot = FALSE, fn = "mc_plot"){
+                         saveplot = FALSE,
+                         fn = "mc_plot",
+                         nr = 1){
   if(require(reshape2) == FALSE){install.packages("reshape2", dependencies = TRUE); message("Ek laai vir jou reshape2")}
   if(require(ggplot2) == FALSE){install.packages("ggplot2", dependencies = TRUE); message("Ek laai vir jou ggplot2")}
   names(prmlst) = map_chr(prmlst, function(x) x@nm)
@@ -39,11 +41,12 @@ monticarleer <- function(prmlst,
     p <- ggplot2::ggplot(data = mr, aes(x = Value, group = Variable, fill = Variable)) +
       geom_histogram(aes(y = ..density..), bins = nbin) +
       geom_density(aes(y =  ..density.., fill = NULL)) +
-      facet_wrap(.~Variable, scales = "free") +
+      facet_wrap(.~Variable, scales = "free", nrow = nr) +
       theme(legend.position = "bottom") +
       ggtitle(label = "Calculation of:" ,subtitle = my.formula)
 
     plot(p)
+    #out$plot <- list(p)
     if (saveplot) { ggsave(fn, plot = p, width = 12) }
   }
   if (tbl_out == TRUE) {
